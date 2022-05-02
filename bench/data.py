@@ -1,6 +1,6 @@
 from sklearn.base import TransformerMixin, clone
 from enum import Enum
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 import numpy as np
 import inspect, sys
@@ -18,30 +18,29 @@ CAT = ColumnType.CAT
 DROP = ColumnType.DROP
 
 
-def BetterTransformer(TransformerMixin):
+class BetterTransformer(TransformerMixin):
 
     def __init__(self, column_types, numeric_transformer=StandardScaler(), category_transformer=OneHotEncoder(sparse=False)):
         self.column_types = column_types
         self.numeric_transformer = numeric_transformer
         self.category_transformer = category_transformer
 
-    def fit(self, X, y=None):
+    def fit(self, X):
         assert(len(self.column_types) == X.shape[1])
         transformers = []
         for i, type in enumerate(self.column_types):
             if type == NUM:
                 transformer = clone(self.numeric_transformer)
-                transformer.fit(X[:, i])
-                transformers.append('num_{}'.format(i), transformer, i)
+                transformers.append(('num_{}'.format(i), transformer, [i]))
             elif type == CAT:
                 transformer = clone(self.category_transformer)
-                transformer.fit(X[:, i])
-                transformers.append('cat_{}'.format(i), transformer, i)
+                transformers.append(('cat_{}'.format(i), transformer, [i]))
             elif type == DROP:
                 continue
             else:
                 raise NotImplementedError('Unknow type {}'.format(type))
         self.transformer_ = ColumnTransformer(transformers)
+        self.transformer_.fit(X)
         return self
     
     def transform(self, X):
@@ -57,7 +56,7 @@ def BetterTransformer(TransformerMixin):
 
 def preprocess_1461(data):
     types = [NUM, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT]
-    data['pdays'].replace(-1, data['pdays'].max() + 1, inplace=True)
+    data['V14'].replace(-1, data['V14'].max() + 1, inplace=True)
     return data, types
 
 
@@ -98,16 +97,17 @@ def preprocess_42395(data):
 
 def get_openml(dataset_id):
     funcs = {name:obj for name, obj in inspect.getmembers(sys.modules[__name__]) 
-                if (inspect.isfunction(obj) and name.startwith('preprocess'))}
+                if (inspect.isfunction(obj) and name.startswith('preprocess'))}
 
     func_name = 'preprocess_{}'.format(dataset_id)
     if not func_name in funcs:
         raise ValueError('No preprocessing found for dataset {}'.format(dataset_id))
     
     func = funcs[func_name]
-    dataset = openml.datasets.get_dataset(43439)
-    X, y, _, _ = dataset.get_data(dataset_format='dataframe')
+    dataset = openml.datasets.get_dataset(dataset_id)
+    X, y, _, _ = dataset.get_data(dataset_format='dataframe', target=dataset.default_target_attribute)
     X, types = func(X)
     transformer = BetterTransformer(types)
+    y = LabelEncoder().fit_transform(y)
 
-    return X, y, transformer
+    return X.values, y, transformer
