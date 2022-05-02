@@ -1,0 +1,30 @@
+Dataset 1471 Iter 0 Model MLP Params {'alpha': 0.0001, 'hidden_layer_sizes': (100,), 'solver': 'adam'} ROC 0.9567485291104411
+Dataset 1471 Iter 1 Model MLP Params {'alpha': 0.0001, 'hidden_layer_sizes': (100,), 'solver': 'adam'} ROC 0.9619115597396192
+Dataset 1471 Iter 2 Model MLP Params {'alpha': 0.0001, 'hidden_layer_sizes': (100,), 'solver': 'adam'} ROC 0.952898660043817
+Dataset 1471 Iter 3 Model MLP Params {'alpha': 0.0001, 'hidden_layer_sizes': (100,), 'solver': 'adam'} ROC 0.9518547956741323
+Dataset 1471 Iter 4 Model MLP Params {'alpha': 0.001, 'hidden_layer_sizes': (32, 32), 'solver': 'adam'} ROC 0.9554749965662356
+transofrmer <bench.data.BetterTransformer object at 0x7f077e23ce50>
+Dataset 1502 Iter 0 Model RF Params {'max_depth': 32, 'n_estimators': 50} ROC 0.9999826478392453
+Dataset 1502 Iter 1 Model MLP Params {'alpha': 0.001, 'hidden_layer_sizes': (32, 32), 'solver': 'adam'} ROC 0.9999496722794302
+Dataset 1502 Iter 2 Model RF Params {'max_depth': None, 'n_estimators': 100} ROC 0.9999669814109773
+Dataset 1502 Iter 3 Model RF Params {'max_depth': 32, 'n_estimators': 100} ROC 0.999943549476299
+Dataset 1502 Iter 4 Model RF Params {'max_depth': 32, 'n_estimators': 50} ROC 0.9999656677545801
+transofrmer <bench.data.BetterTransformer object at 0x7f077e36e5b0>
+Dataset 40922 Iter 0 Model RF Params {'max_depth': 32, 'n_estimators': 100} ROC 0.9985515282960604
+Dataset 40922 Iter 1 Model RF Params {'max_depth': 32, 'n_estimators': 100} ROC 0.9983839286834884
+Dataset 40922 Iter 2 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9983988875875945
+Dataset 40922 Iter 3 Model RF Params {'max_depth': None, 'n_estimators': 100} ROC 0.9988122005790269
+Dataset 40922 Iter 4 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9984646354114338
+transofrmer <bench.data.BetterTransformer object at 0x7f077e387a90>
+Dataset 43551 Iter 0 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.6633070992611629
+Dataset 43551 Iter 1 Model RF Params {'max_depth': None, 'n_estimators': 100} ROC 0.6417242210086733
+Dataset 43551 Iter 2 Model GBDT Params {'max_depth': 3, 'n_estimators': 10} ROC 0.6821795695470607
+Dataset 43551 Iter 3 Model RF Params {'max_depth': 8, 'n_estimators': 100} ROC 0.687053842310026
+Dataset 43551 Iter 4 Model GBDT Params {'max_depth': 3, 'n_estimators': 20} ROC 0.6756076667737445
+
+Dataset 1461 Iter 0 Model RF Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9163601885861131
+Dataset 1461 Iter 1 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9202401004719388
+Dataset 1461 Iter 2 Model RF Params {'max_depth': 32, 'n_estimators': 100} ROC 0.9191380222605476
+Dataset 1461 Iter 3 Model RF Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9128173927247805
+Dataset 1461 Iter 4 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9242630617663317
+
