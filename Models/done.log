@@ -28,3 +28,9 @@ Dataset 1461 Iter 2 Model RF Params {'max_depth': 32, 'n_estimators': 100} ROC 0
 Dataset 1461 Iter 3 Model RF Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9128173927247805
 Dataset 1461 Iter 4 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9242630617663317
 
+transofrmer <bench.data.BetterTransformer object at 0x127b60fa0>
+Dataset 1590 Iter 0 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9130804081899067
+Dataset 1590 Iter 1 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.914977502173115
+Dataset 1590 Iter 2 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.91764895723289
+Dataset 1590 Iter 3 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9152295501274975
+Dataset 1590 Iter 4 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.9171503005868994
