@@ -33,7 +33,7 @@ from cardinal.utils import ActiveLearningSplitter
 
 from bench.samplers import TwoStepIncrementalMiniBatchKMeansSampler, TwoStepMiniBatchKMeansSampler
 from bench.trustscore import TrustScore
-import prose.datainsights as di
+import bench.prose.datainsights as di
 
 
 
@@ -129,7 +129,7 @@ n_classes = len(np.unique(y))
 k_start = False
 
 n_iter = 10
-batch_size = int(.01 * X.shape[0])
+batch_size = int(.001 * X.shape[0])
 
 
 start_size = batch_size
