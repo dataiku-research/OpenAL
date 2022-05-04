@@ -118,10 +118,10 @@ print('Cache path is {}'.format(cache_path))
 # metric = exp_config.get('metric', accuracy_score)
 
 # data = exp_module.get_dataset()
-X, y, transformer = get_openml(1461)
+X, y, transformer, best_model = get_openml(1461)
 X = transformer.fit_transform(X)
 
-get_clf = lambda: RandomForestClassifier(max_depth=8)
+get_clf = lambda: best_model
 fit_clf = lambda clf, X, y: clf.fit(X, y)
 
 n_classes = len(np.unique(y))
