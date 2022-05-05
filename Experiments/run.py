@@ -170,9 +170,9 @@ for seed in range(10):
             dataset=dataset_id
         )
 
-        v = db.get('accuracy_selected', config)
-        if v is not None and v.shape[0] > 0:
-            continue
+        # v = db.get('accuracy_selected', config)
+        # if v is not None and v.shape[0] > 0:
+        #     continue
         
         # Capture the output for logging
         with Tee() as tee:
