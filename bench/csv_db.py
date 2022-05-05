@@ -38,8 +38,8 @@ class CsvValue:
     def get(self, index):
         if self._data is None:
             return None
-        index_list = [index[i] for i in self._data.columns]
-        return self._data.loc[index]
+        index_list = [index[i] for i in self._data.index.names]
+        return self._data.loc[tuple(index_list)]
 
 
 class CsvDb:

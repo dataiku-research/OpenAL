@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.  All rights reserved.
 
-from prose.datainsights._assertion._disjunctive_assertions import DisjunctiveAssertion
-from prose.datainsights._assertion._decision_tree_assertions import (
+from ._assertion._disjunctive_assertions import DisjunctiveAssertion
+from ._assertion._decision_tree_assertions import (
     DecisionTreeAssertion,
 )
 from ._assertion._assertion_helper import _AssertionType, Assertion

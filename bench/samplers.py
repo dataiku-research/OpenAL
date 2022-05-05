@@ -8,7 +8,6 @@ from sklearn.neighbors import KNeighborsClassifier, NearestNeighbors
 from cardinal.uncertainty import MarginSampler, margin_score, EntropySampler, ConfidenceSampler, ScoredQuerySampler, check_proba_estimator, _get_probability_classes
 from cardinal.clustering import IncrementalMiniBatchKMeansSampler
 import copy
-from torch import tensor
 from sklearn.metrics import confusion_matrix
 from cardinal.typeutils import RandomStateType, check_random_state
 from tensorflow.keras.models import Sequential, Model
@@ -380,6 +379,9 @@ class AdaptiveSampler4:
 class BatchBALDSampler:
 
     def __init__(self, n_classes, batch_size, clf, n_estimators, n_samples=None):
+
+        from torch import tensor
+
         self.n_classes = n_classes
         self.batch_size = batch_size
         self.clf = clf

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.  All rights reserved.
 
-from prose.datainsights._assertion._pca_assertions import PcaAssertion
-from prose.datainsights._assertion._assertion_helper import (
+from ._pca_assertions import PcaAssertion
+from ._assertion_helper import (
     _RelationalOperators,
     _AssertionType,
     SingleConstraint,
