@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from ._pca_assertions import PcaAssertion
-from prose.datainsights._assertion._assertion_helper import (
+from ._assertion_helper import (
     _RelationalOperators,
     _AssertionType,
     SingleConstraint,
