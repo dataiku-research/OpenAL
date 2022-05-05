@@ -35,6 +35,12 @@ class CsvValue:
                 self._data = self._data.append(pd.DataFrame([[value]], columns=['value'], index=[loc]))
         self._data.to_csv(self.path)
 
+    def get(self, index):
+        if self._data is None:
+            return None
+        index_list = [index[i] for i in self._data.columns]
+        return self._data.loc[index]
+
 
 class CsvDb:
     def __init__(self, folder):
@@ -58,3 +64,8 @@ class CsvDb:
         if not key in self._values:
             self._values[key] = CsvValue(str(self.folder / (key + '.csv')))
         self._values[key].upsert(index, value)
+
+    def get(self, key, index):
+        if not key in self._values:
+            return None
+        return self._values[key].get(index)

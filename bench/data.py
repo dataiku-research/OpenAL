@@ -2,8 +2,8 @@ from sklearn.base import TransformerMixin, clone
 from enum import Enum
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier, GBDTClassifier
-from sklearn.neutal_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 import numpy as np
 import inspect, sys
 import openml
