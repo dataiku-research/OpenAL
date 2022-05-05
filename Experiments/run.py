@@ -77,48 +77,18 @@ class Tee(io.StringIO):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-m', action="store", nargs='*', default=['all'], help='Metrics to print')
-parser.add_argument('methods', nargs='*', help='Methods to print', default=[])
+parser.add_argument('dataset_id', type=int, help='Dataset to process')
 
 args = parser.parse_args()
 
-metrics = set(args.m)
-samplers_to_compute = args.methods
+dataset_id = args.dataset_id
 
 del args
 
-def should_compute(metric):
-    if 'all' in metrics:
-        return True
-    return metric in metrics
-
-
-if len(samplers_to_compute) > 0:
-    print('Will only compute samplers', samplers_to_compute)
-
 cwd = Path.cwd()
-cache_path = cwd / 'cache'
-exp_path = cwd / '..' / 'exp'
-database_path = './results/'
-db = CsvDb('results')
+db = CsvDb('results_{}'.format(dataset_id))
 
-dataset_name = cwd.stem
-
-
-print('Cache path is {}'.format(cache_path))
-
-# Load experiment configuration
-# exp_module = importlib.import_module(dataset_name)
-# exp_config = exp_module.get_config()
-
-# start_size = exp_config['start_size']
-# batches = exp_config['batches']
-# two_step_beta = exp_config['two_step_beta']
-# oracle_error = exp_config.get('oracle_error', None)
-# metric = exp_config.get('metric', accuracy_score)
-
-# data = exp_module.get_dataset()
-X, y, transformer, best_model = get_openml(1461)
+X, y, transformer, best_model = get_openml(dataset_id)
 X = transformer.fit_transform(X)
 
 get_clf = lambda: best_model
@@ -155,9 +125,8 @@ model_cache = dict()
 
 
 for seed in range(10):
-    print(seed)
-    methods = dict()
-    _methods = {
+    print('Iteration {}'.format(seed))
+    methods = {
         'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=int(seed)),
         'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
@@ -169,13 +138,6 @@ for seed in range(10):
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
     }
 
-    methods.update(_methods)
-
-    if samplers_to_compute is None:
-        samplers_to_compute = list(methods.keys())
-    
-    index = np.arange(X.shape[0])
-    
     # precomputed_proba_path = Path('precomputed_proba') / (seed + ds)
 
     # if not precomputed_proba_path.exists():
@@ -197,8 +159,20 @@ for seed in range(10):
     # max_margin = np.load(str(precomputed_proba_path / 'max_margin.npy'))
     # max_entropy = np.load(str(precomputed_proba_path / 'max_entropy.npy'))
 
-    for name in samplers_to_compute:
+    for name in methods:
         print(name)
+
+        # Check if it has been computer already
+        config = dict(
+            seed=seed,
+            method=name,
+            n_iter=n_iter - 1,
+            dataset=dataset_id
+        )
+
+        v = db.get('accuracy_selected', config)
+        if v is not None and v.shape[0] > 0:
+            continue
         
         # Capture the output for logging
         with Tee() as tee:
@@ -264,7 +238,7 @@ for seed in range(10):
                     seed=seed,
                     method=name,
                     n_iter=i,
-                    dataset=dataset_name
+                    dataset=dataset_id
                 )
 
                 selected = splitter.selected_at(i + 1)
