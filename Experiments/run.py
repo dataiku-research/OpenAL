@@ -215,18 +215,7 @@ for seed in range(10):
                 sampler = method(params)
                 sampler.fit(X[splitter.selected], y[splitter.selected])
 
-                if name.startswith('iwkmeans'):
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected], fixed_cluster_centers=X[splitter.selected])
-                elif name.startswith('iconfidence'):
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected], max_confidence[splitter.non_selected])
-                elif name.startswith('imargin'):
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected], max_margin[splitter.non_selected])
-                elif name.startswith('ientropy'):
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected], max_entropy[splitter.non_selected])
-                elif name.startswith('iiwkmeans'):
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected], max_margin[splitter.non_selected], fixed_cluster_centers=X[splitter.selected])
-                else:
-                    new_selected_index = sampler.select_samples(X[splitter.non_selected])
+                new_selected_index = sampler.select_samples(X[splitter.non_selected])
                                 
                 splitter.add_batch(new_selected_index)
 
