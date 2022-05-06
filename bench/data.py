@@ -65,7 +65,7 @@ def preprocess_1461(data):
 
 def preprocess_1471(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = MLP(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam')
+    best_model = MLP(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam', n_iter=1000)
     return data, types, best_model
 
 
