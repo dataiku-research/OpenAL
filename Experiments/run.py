@@ -81,6 +81,20 @@ parser.add_argument('dataset_id', type=int, help='Dataset to process')
 
 args = parser.parse_args()
 
+# dataset_ids = []
+
+# ok : 42395, 1502, 40922
+
+# problem : problem shape : 43551
+
+# 1461, 1590 : Assertions learning failed
+
+# 41138, 41162, 42803, 43439 : attente best model
+
+# 1471 : Assertions learning failed
+# /home/wjonas/al/lib64/python3.6/site-packages/sklearn/neural_network/_multilayer_perceptron.py:617: ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.
+#   % self.max_iter, ConvergenceWarning)
+
 dataset_id = args.dataset_id
 
 del args
@@ -133,7 +147,7 @@ for seed in range(10):
         'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=int(seed)), batch_size=params['batch_size']),
         'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
-        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
         # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
     }

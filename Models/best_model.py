@@ -7,10 +7,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
 
 
-
-for dataset_id in [42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
+# 41138, 41162, 42803, 43439 : attente best model
+for dataset_id in [43439]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
     #try:
-        X, y, transformer = get_openml(dataset_id)
+        X, y, transformer, fake_estimator = get_openml(dataset_id)
         print('transofrmer', transformer)
         estimators = [
             ('RF', RandomForestClassifier(), {'n_estimators':[10, 20, 50, 100], 'max_depth':[None, 8, 32]}),

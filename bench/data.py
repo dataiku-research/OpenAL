@@ -65,7 +65,7 @@ def preprocess_1461(data):
 
 def preprocess_1471(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = MLP(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam')
+    best_model = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam')  #MLP
     return data, types, best_model
 
 
@@ -83,24 +83,42 @@ def preprocess_40922(data):
 
 def preprocess_43551(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT]
-    best_model = GBDTClassifier(max_depth=3, n_estimators=20)
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
     return data, types, best_model
 
 
 def preprocess_1590(data):
     types = [NUM, CAT, NUM, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, NUM, CAT]
-    best_model = GBDTClassifier(max_depth=3, n_estimators=20)
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
     return data, types, best_model
 
 
 def preprocess_41138(data):
     types = [NUM] * 170
-    return data, types
+    best_model = None
+    return data, types, best_model
 
 
 def preprocess_42395(data):
     types = [DROP] + ([NUM] * 200)
-    best_model = GBDTClassifier(max_depth=3, n_estimators=20)
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
+    return data, types, best_model
+
+#TODO : update
+# def preprocess_41162(data):
+#     types = [NUM] * 170
+#     best_model = None
+#     return data, types, best_model
+
+#TODO : update
+# def preprocess_42803(data):
+#     types = [NUM] * 170
+#     best_model = None
+#     return data, types, best_model
+
+def preprocess_43439(data):
+    types = [CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
+    best_model = None
     return data, types, best_model
 
 
