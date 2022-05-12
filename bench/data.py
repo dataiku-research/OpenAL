@@ -1,9 +1,11 @@
 from sklearn.base import TransformerMixin, clone
 from enum import Enum
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
 import numpy as np
 import inspect, sys
 import openml
@@ -65,7 +67,7 @@ def preprocess_1461(data):
 
 def preprocess_1471(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam')  #MLP
+    best_model = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam')
     return data, types, best_model
 
 
@@ -83,25 +85,28 @@ def preprocess_40922(data):
 
 def preprocess_43551(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT]
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
     return data, types, best_model
 
 
 def preprocess_1590(data):
     types = [NUM, CAT, NUM, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, NUM, CAT]
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
     return data, types, best_model
 
 
 def preprocess_41138(data):
     types = [NUM] * 170
-    best_model = None
-    return data, types, best_model
+    best_model = RandomForestClassifier(max_depth=8)
+    transformer = BetterTransformer(
+        types,
+        numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
+    return data, types, best_model, transformer
 
 
 def preprocess_42395(data):
     types = [DROP] + ([NUM] * 200)
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)   #GBDTClassifier
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
     return data, types, best_model
 
 #TODO : update
@@ -133,8 +138,12 @@ def get_openml(dataset_id):
     func = funcs[func_name]
     dataset = openml.datasets.get_dataset(dataset_id)
     X, y, _, _ = dataset.get_data(dataset_format='dataframe', target=dataset.default_target_attribute)
-    X, types, best_model = func(X)
-    transformer = BetterTransformer(types)
+    preproc = func(X)
+    if len(preproc) == 3:
+        X, types, best_model = preproc
+        transformer = BetterTransformer(types)
+    else:
+        X, types, best_model, transformer = preproc
     y = LabelEncoder().fit_transform(y)
 
     return X.values, y, transformer, best_model
