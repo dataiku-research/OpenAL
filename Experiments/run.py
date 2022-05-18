@@ -85,10 +85,7 @@ args = parser.parse_args()
 
 # OK
 # ok : 42395, 1502, 40922
-# 1461, 1590 : Assertions learning failed
-# 1471 : Assertions learning failed
-# /home/wjonas/al/lib64/python3.6/site-packages/sklearn/neural_network/_multilayer_perceptron.py:617: ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.
-#   % self.max_iter, ConvergenceWarning)
+# 1461, 1590, 1471: Assertions learning failed
 
 
 # problem : problem shape : 43551
