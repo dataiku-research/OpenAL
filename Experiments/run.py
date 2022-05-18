@@ -306,7 +306,8 @@ for seed in range(10):
 
                 # ================================================================================
 
-                # Trustscore
+                # Trustscore 
+                # Metric skipped for dataset 43551 because of invalid shape error when calling trustscorer.score() (shape in axis 1: 0.)
 
                 trustscorer = TrustScore()
                 score = np.nan
