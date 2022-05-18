@@ -81,17 +81,37 @@ parser.add_argument('dataset_id', type=int, help='Dataset to process')
 
 args = parser.parse_args()
 
+# dataset_ids = []
+
+# OK
+# ok : 42395, 1502, 40922
+# 1461, 1590 : Assertions learning failed
+# 1471 : Assertions learning failed
+# /home/wjonas/al/lib64/python3.6/site-packages/sklearn/neural_network/_multilayer_perceptron.py:617: ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.
+#   % self.max_iter, ConvergenceWarning)
+
+
+# problem : problem shape : 43551
+# OK 41138, 41162, 42803, 43439 : attente best model
+
+
+# 2000 iter
+
 dataset_id = args.dataset_id
 
 del args
 
 cwd = Path.cwd()
 db = CsvDb('results_{}'.format(dataset_id))
+# db_idx = CsvDb('results_{}'.format(dataset_id))
 
 X, y, transformer, best_model = get_openml(dataset_id)
 X = transformer.fit_transform(X)
 
 get_clf = lambda: best_model
+# if dataset_id in [1471]:
+#     fit_clf = lambda clf, X, y: clf.fit(X, y, epochs=2000)
+# else: 
 fit_clf = lambda clf, X, y: clf.fit(X, y)
 
 n_classes = len(np.unique(y))
@@ -121,6 +141,7 @@ def get_min_dist_per_class(dist, labels):
     
     return min_dist_per_class
 
+
 model_cache = dict()
 
 
@@ -133,7 +154,7 @@ for seed in range(10):
         'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=int(seed)), batch_size=params['batch_size']),
         'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
-        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
         # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
     }
@@ -338,7 +359,79 @@ for seed in range(10):
                 db.upsert('agreement_batch', config,  np.mean(knn.predict(X[batch]) == predicted_batch))
 
 
+                # ================================================================================
+
+                # Save indexes
+
+                # if i==0:
+                #     config["type"] = "one per class"
+                #     for index in one_per_class:
+                #         db_idx.upsert('indexes', config, index)
+
+                #     config["type"] = "random"
+                #     for index in first_index:
+                #         db_idx.upsert('indexes', config, index)
+                    
+                #     config["type"] = "test"
+                #     for index in splitter.test:
+                #         db_idx.upsert('indexes', config, index)
+                
+                # elif i>0:
+                #     config["type"] = "train"
+                #     for index in splitter.batch_at(i):
+                #         db_idx.upsert('indexes', config, index)
+                # config.pop("type")
+
+
+
+                # if i==0:
+                #     for index in one_per_class:
+                #         db.upsert('indexes', config, 'one-per-class_{}'.format(index))
+
+                #     for index in first_index:
+                #         db.upsert('indexes', config, 'random_{}'.format(index))
+                    
+                #     for index in splitter.test:
+                #         db.upsert('indexes', config, 'test_{}'.format(index))
+                
+                # elif i>0:
+                #     for index in splitter.batch_at(i):
+                #         db.upsert('indexes', config, 'train_{}'.format(index))
+
+        
+        #Saving indexes for reproducibility
+
+        try:
+            df_to_save = pd.read_csv('results_{}/indexes.csv'.format(dataset_id)) 
+            #First unique indexes
+            df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "one per class", 'index':index} for index in one_per_class])
+            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+        except:
+            #First unique indexes
+            df_to_save = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "one per class", 'index':index} for index in one_per_class])
+    
+        # Randomly selected samples
+        df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "random", 'index':index} for index in first_index])
+        df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+        # Test indexes
+        df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "test", 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
+        df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+        # Train indexes
+        for i in range(n_iter):
+            df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': i+1, 'dataset':dataset_id, 'type': "train", 'index':index} for index, is_in_train_set in enumerate(splitter.batch_at(i + 1)) if is_in_train_set])
+            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+        
+        df_to_save.to_csv('results_{}/indexes.csv'.format(dataset_id), index=False)
+
+
         log_folder = Path('logs')
         log_folder.mkdir(exist_ok=True)
         with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
             f.write(tee.read())
+        
+
+
+""" Possibles bugs remarqués ?
+
+- Tous les 1ers indices de samples sélectionnés par la méthode random, lors de chaque batch d'itération d'AL, se suivent et augmentent de 1 à chaque itération -> problème de mon côté pour interpreter le mask du splitter ?
+"""
