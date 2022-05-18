@@ -6,19 +6,21 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
 
+import numpy as np
+import pandas as pd
 
 # 41138, 41162, 42803, 43439 : attente best model
-for dataset_id in [43439]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
+for dataset_id in [42803]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
     #try:
         X, y, transformer, fake_estimator = get_openml(dataset_id)
-        print('transofrmer', transformer)
+        print('transformer', transformer)
+        # X = X_df.values
         estimators = [
             ('RF', RandomForestClassifier(), {'n_estimators':[10, 20, 50, 100], 'max_depth':[None, 8, 32]}),
             ('GBDT', GradientBoostingClassifier(), {'n_estimators':[10, 20, 50, 100], 'max_depth':[3, 8, 16]}),
             ('MLP', MLPClassifier(max_iter=5000), {'hidden_layer_sizes':[(100,), (32, 32)], 'solver':['adam', 'sgd'], 'alpha':[1e-4, 1e-3]}),
         ]
 
-        # print(X, y)
 
         # Realistic setting: in our experiments, we will take test = 20% and maxmum labeling is 10%
         # Therefore we take 10% of strain and 20% for test. Also, some datasets have imbalanced labels,
@@ -33,12 +35,25 @@ for dataset_id in [43439]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 435
             best_model = None
             best_roc = None
             best_params = None
-        
+
             for ind_train, _ in isss.split(X_learn_raw, y_learn):
                 X_train_raw = X_learn_raw[ind_train]
                 y_train = y_learn[ind_train]
 
-                X_train = transformer.fit_transform(X_train_raw)
+                # if dataset_id in [42803]:
+                #     # print("COLLLLLLLL           ",  X_df.columns)
+                #     # TODO : Would have been better to find a way to transform dataset format through the specific Pipeline for 42803 ...
+                #     X_train = pd.DataFrame(X_train_raw, columns=X_df.columns)
+                #     # print(X_train['Date'])    OK
+                #     # print("Date" in X_train.columns)
+                #     print(X_train.columns)
+                #     X_train = np.array(transformer.fit_transform(X_train))
+                #     X_test = np.array(transformer.transform(pd.DataFrame(X_test_raw, columns=X_df.columns)))
+                # else:
+                X_train = transformer.fit_transform(X_train_raw, full_X=X)
+                # print(X_test_raw)
+                # print("train:       ", list(X_train_raw[:,1]).count(11.0))
+                # print("test:       ", list(X_test_raw[:,1]).count(11.0))
                 X_test = transformer.transform(X_test_raw)
                 
                 for name, estimator, param_grid in estimators:
