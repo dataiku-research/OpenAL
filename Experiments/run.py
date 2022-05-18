@@ -86,13 +86,9 @@ args = parser.parse_args()
 # OK
 # ok : 42395, 1502, 40922
 # 1461, 1590, 1471: Assertions learning failed
+# 43551 : problem metric trustscore (deleted for this dataset : problem shape)
 
-
-# problem : problem shape : 43551
 # OK 41138, 41162, 42803, 43439 : attente best model
-
-
-# 2000 iter
 
 dataset_id = args.dataset_id
 
