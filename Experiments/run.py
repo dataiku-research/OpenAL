@@ -102,9 +102,6 @@ X, y, transformer, best_model = get_openml(dataset_id)
 X = transformer.fit_transform(X)
 
 get_clf = lambda: best_model
-# if dataset_id in [1471]:
-#     fit_clf = lambda clf, X, y: clf.fit(X, y, epochs=2000)
-# else: 
 fit_clf = lambda clf, X, y: clf.fit(X, y)
 
 n_classes = len(np.unique(y))
