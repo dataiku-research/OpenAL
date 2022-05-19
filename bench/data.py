@@ -30,6 +30,13 @@ def transform_time_string_to_timestamp(time_col):
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%H:%M").timetuple()) if sample[0] is not None else None
     return time_col
 
+def transform_date2_string_to_timestamp(date_col):
+    """Convert date strings "2016-04-29T18:38:08Z" to timestamp format"""
+    # date_col['Date'] = date_col['Date'].apply(lambda x: time.mktime(datetime.datetime.strptime(str(x), "%d/%m/%Y").timetuple()) if x is not None else None)
+    for sample in date_col:
+        sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%Y-%m-%dT%H:%M:%SZ").timetuple()) if sample[0] is not None else None
+    return date_col
+
 
 class ColumnType(Enum):
     NUM = 1
@@ -37,6 +44,7 @@ class ColumnType(Enum):
     DROP = 3
     DATE = 4
     TIME = 5
+    DATE2 = 6
 
 # Make writing easier
 NUM = ColumnType.NUM
@@ -44,6 +52,7 @@ CAT = ColumnType.CAT
 DROP = ColumnType.DROP
 DATE = ColumnType.DATE
 TIME = ColumnType.TIME
+DATE2 = ColumnType.DATE2
 
 
 class BetterTransformer(TransformerMixin):
@@ -81,6 +90,11 @@ class BetterTransformer(TransformerMixin):
                 transformers.append(('date_{}'.format(i), transformer, [i]))
             elif type == TIME:
                 transformer = Pipeline([('convert_date', FunctionTransformer(transform_time_string_to_timestamp)),
+                                        ('Scaler', StandardScaler())]) 
+                transformers.append(('date_{}'.format(i), transformer, [i]))
+            elif type == DATE2:
+                # TODO   .weekday()
+                transformer = Pipeline([('convert_date2', FunctionTransformer(transform_date2_string_to_timestamp)),
                                         ('Scaler', StandardScaler())]) 
                 transformers.append(('date_{}'.format(i), transformer, [i]))
             elif type == DROP:
@@ -176,8 +190,10 @@ def preprocess_42803(data):
 
 #TODO : update
 def preprocess_43439(data):
-    types = [CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
-    best_model = None
+    #TODO : extract hours and day of week more
+    # .weekday()
+    types = [DROP, CAT, DATE2, DATE2, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
+    best_model = GradientBoostingClassifier(max_depth=8, n_estimators=20)
     return data, types, best_model
 
 
