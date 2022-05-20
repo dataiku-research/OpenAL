@@ -79,11 +79,11 @@ class BetterTransformer(TransformerMixin):
                                     #clone(self.category_transformer)
                 else:
                     transformer = Pipeline([
-                                    ('Imputer', SimpleImputer(strategy='most_frequent')),   #TODO : stratégie discutable
-                                    ('OneHotEncoder', OneHotEncoder(sparse=False, categories=[np.unique(full_X[:, i])]))
-                                    ]) 
-                                    #clone(self.category_transformer(categories=[np.unique(full_X[:, i])]))
-                transformers.append(('cat_{}'.format(i), transformer, [i]))
+                                        ('Imputer', SimpleImputer(strategy='most_frequent')),   #TODO : stratégie discutable
+                                        ('OneHotEncoder', OneHotEncoder(sparse=False, categories=[np.unique(full_X[:, i][~pd.isna(full_X[:, i])])]))
+                                        ]) 
+                                        #clone(self.category_transformer(categories=[np.unique(full_X[:, i])]))
+                    transformers.append(('cat_{}'.format(i), transformer, [i]))
             elif type == DATE:
                 transformer = Pipeline([('convert_date', FunctionTransformer(transform_date_string_to_timestamp)),
                                         ('Scaler', StandardScaler())])
@@ -172,7 +172,10 @@ def preprocess_41162(data):
     #Problème : problème d'encoding d'une valeur numérique (col 0) qui apparait dans le train mais pas dans le test ... PAS NORMAL CAR NUMERIQUE
     types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]    # 3ème et 4ème features ajoutées en catégorielles
     best_model = RandomForestClassifier(max_depth=8)
-    return data, types, best_model
+    transformer = BetterTransformer(
+        types,
+        numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
+    return data, types, best_model, transformer
 
 #TODO : fin update
 def preprocess_42803(data):
@@ -180,18 +183,18 @@ def preprocess_42803(data):
     best_model = RandomForestClassifier(max_depth=8)
     transformer = BetterTransformer(
         types,
-        numeric_transformer=Pipeline([
-            ('Imputer', SimpleImputer(strategy='median')),
-            ('Scaler', StandardScaler())
-            ])
-        )
-
+        numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
 
-#TODO : update
+#TODO : fin update
 def preprocess_43439(data):
     #TODO : extract hours and day of week more
     # .weekday()
+
+    # Adding new features to the dataset (extract hours and day of week more)
+    # date_col = data['date']
+    # weekday_col = transform_date2_string_to_timestamp(date_col)
+
     types = [DROP, CAT, DATE2, DATE2, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
     best_model = GradientBoostingClassifier(max_depth=8, n_estimators=20)
     return data, types, best_model
