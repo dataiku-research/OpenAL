@@ -86,10 +86,12 @@ class BetterTransformer(TransformerMixin):
                     transformers.append(('cat_{}'.format(i), transformer, [i]))
             elif type == DATE:
                 transformer = Pipeline([('convert_date', FunctionTransformer(transform_date_string_to_timestamp)),
+                                        ('Imputer', SimpleImputer(strategy='median')),
                                         ('Scaler', StandardScaler())])
                 transformers.append(('date_{}'.format(i), transformer, [i]))
             elif type == TIME:
                 transformer = Pipeline([('convert_date', FunctionTransformer(transform_time_string_to_timestamp)),
+                                        ('Imputer', SimpleImputer(strategy='median')),
                                         ('Scaler', StandardScaler())]) 
                 transformers.append(('date_{}'.format(i), transformer, [i]))
             elif type == DATE2:
@@ -179,11 +181,11 @@ def preprocess_41162(data):
 
 #TODO : fin update
 def preprocess_42803(data):
-    types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME, CAT, DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location)
+    types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT,    NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME,      NUM        , DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location), NUM (31) (Local_Authority_(District) CAT -> NUM)
     best_model = RandomForestClassifier(max_depth=8)
     transformer = BetterTransformer(
         types,
-        numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
+        numeric_transformer = Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
 
 #TODO : fin update
