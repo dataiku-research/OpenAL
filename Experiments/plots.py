@@ -11,29 +11,44 @@ from cardinal.plotting import plot_confidence_interval
 # dataset_id = args.dataset_id
 # del args
 
-dataset_id = 1471
 n_iter = 10
+x_data = np.arange(n_iter)
+metrics = [
+    ('Accuracy','accuracy_test.csv'),
+    ('Agreement','agreement_test.csv'),
+    ('Trustscore','test_trustscore.csv'),
+    ('Violation','test_violation.csv'),
+    ('Exploration','soft_exploration.csv'), #TODO important file to plot
+    ('Closest','this_closest.csv')  #TODO important file to plot
+]
 
-#Load data
-df = pd.read_csv('results_{}/accuracy_test.csv'.format(dataset_id))
-method_names = np.unique(df["method"].values)
+# dataset_id = 43551
+dataset_ids = [1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551]
+for dataset_id in dataset_ids:
+    for i, (metric_name, filename) in enumerate(metrics):
+        try:
+            df = pd.read_csv('results_{}/'.format(dataset_id)+filename)
+            method_names = np.unique(df["method"].values)
 
-for sampler_name in method_names:
-    all_accuracies = []
-    for seed in range(10):
-        accuracies = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value']
-        all_accuracies.append(accuracies)
+            for sampler_name in method_names:
+                # if sampler_name in ['entropy', 'margin']:
+                    all_metric = []
+                    for seed in range(10):
+                        metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                        all_metric.append(metric)
+                    
+                    plt.figure(i, figsize=(15,10))
+                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
+            plt.xlabel('AL iteration')
+            plt.ylabel(metric_name)
+            plt.title('{} metric'.format(metric_name))
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(f'results_{dataset_id}/plot-'+metric_name+'.png')
+            plt.clf()
+            
+        except:
+            print("[ERROR] Problem occured when trying to plot {} metric values".format(metric_name))
 
-    # Plot
-    x_data = np.arange(n_iter)
-    plot_confidence_interval(x_data, all_accuracies, label='{}'.format(sampler_name))
-
-
-plt.xlabel('AL iteration')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.tight_layout()
-
-plt.savefig(f'results_{dataset_id}/accuracy-plot.png')
-plt.show()
+    plt.show()
