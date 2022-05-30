@@ -408,9 +408,9 @@ for seed in range(10):
         df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "test", 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
         df_to_save = pd.concat([df_to_save, df], ignore_index=True)
         # Train indexes
-        for i in range(n_iter):
-            df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': i+1, 'dataset':dataset_id, 'type': "train", 'index':index} for index, is_in_train_set in enumerate(splitter.batch_at(i + 1)) if is_in_train_set])
-            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+        # for i in range(n_iter):
+        #     df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': i+1, 'dataset':dataset_id, 'type': "train", 'index':index} for index, is_in_train_set in enumerate(splitter.batch_at(i + 1)) if is_in_train_set])
+        #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
         
         df_to_save.to_csv('results_{}/indexes.csv'.format(dataset_id), index=False)
 
