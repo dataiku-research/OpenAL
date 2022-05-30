@@ -87,19 +87,3 @@ https://www.openml.org/search?type=data&status=active&id=43551
 number of instances	34452
 number of features	10
 number of classes	2
-
-### 42803 - road-safety
-https://www.openml.org/search?type=data&status=active&id=42803
-target : sex of driver during road accidents
-
-number of instances	363243
-number of features	67
-number of classes	3
-
-### 41162 - kick
-https://www.openml.org/search?type=data&status=active&id=41162
-The challenge of this competition is to predict if the car purchased at the Auction is a Kick (purchase where the vehicle have serious issues that prevent it from being sold to customers).
-
-number of instances	72983
-number of features	33
-number of classes	2

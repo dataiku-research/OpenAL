@@ -95,7 +95,7 @@ dataset_id = args.dataset_id
 del args
 
 cwd = Path.cwd()
-db = CsvDb('results_{}'.format(dataset_id))
+db = CsvDb('results_{}-test'.format(dataset_id))
 # db_idx = CsvDb('results_{}'.format(dataset_id))
 
 X, y, transformer, best_model = get_openml(dataset_id)
@@ -170,7 +170,7 @@ for seed in range(10):
     # max_margin = np.load(str(precomputed_proba_path / 'max_margin.npy'))
     # max_entropy = np.load(str(precomputed_proba_path / 'max_entropy.npy'))
 
-    for name in methods:
+    for name_index, name in enumerate(methods):
         print(name)
 
         # Check if it has been computer already
@@ -214,198 +214,166 @@ for seed in range(10):
             assert(splitter.selected.sum() == start_size)
             assert(splitter.current_iter == 0)
 
-            for i in range(n_iter):
+            # for i in range(n_iter):
 
-                fit_clf(classifier, X[splitter.selected], y[splitter.selected])
-                predicted = _get_probability_classes(classifier, X)
+            #     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
+            #     predicted = _get_probability_classes(classifier, X)
         
-                params = dict(batch_size=batch_size, clf=classifier, iter=i + 1, splitter=splitter)
-                X_test = X[splitter.test]
-                params['X_test'] = X_test
+            #     params = dict(batch_size=batch_size, clf=classifier, iter=i + 1, splitter=splitter)
+            #     X_test = X[splitter.test]
+            #     params['X_test'] = X_test
 
-                sampler = method(params)
-                sampler.fit(X[splitter.selected], y[splitter.selected])
+            #     sampler = method(params)
+            #     sampler.fit(X[splitter.selected], y[splitter.selected])
 
-                new_selected_index = sampler.select_samples(X[splitter.non_selected])
+            #     new_selected_index = sampler.select_samples(X[splitter.non_selected])
                                 
-                splitter.add_batch(new_selected_index)
+            #     splitter.add_batch(new_selected_index)
 
-                assert(splitter.current_iter == (i + 1))
-                assert(splitter.selected_at(i + 1).sum() == ((i + 1) * batch_size))
-                assert(splitter.batch_at(i + 1).sum() == batch_size)
+            #     assert(splitter.current_iter == (i + 1))
+            #     assert(splitter.selected_at(i + 1).sum() == ((i + 1) * batch_size))
+            #     assert(splitter.batch_at(i + 1).sum() == batch_size)
 
-                config = dict(
-                    seed=seed,
-                    method=name,
-                    n_iter=i,
-                    dataset=dataset_id
-                )
+            #     config = dict(
+            #         seed=seed,
+            #         method=name,
+            #         n_iter=i,
+            #         dataset=dataset_id
+            #     )
 
-                selected = splitter.selected_at(i + 1)
-                batch = splitter.batch_at(i + 1)
+            #     selected = splitter.selected_at(i + 1)
+            #     batch = splitter.batch_at(i + 1)
 
-                # ================================================================================
+            #     # ================================================================================
 
-                # Accuracy
+            #     # Accuracy
 
-                predicted_proba_test = predicted[splitter.test] 
-                predicted_proba_selected = predicted[selected] 
-                predicted_proba_batch = predicted[batch]
+            #     predicted_proba_test = predicted[splitter.test] 
+            #     predicted_proba_selected = predicted[selected] 
+            #     predicted_proba_batch = predicted[batch]
 
-                predicted_test = np.argmax(predicted_proba_test, axis=1)
-                predicted_selected = np.argmax(predicted_proba_selected, axis=1)
-                predicted_batch = np.argmax(predicted_proba_batch, axis=1)
+            #     predicted_test = np.argmax(predicted_proba_test, axis=1)
+            #     predicted_selected = np.argmax(predicted_proba_selected, axis=1)
+            #     predicted_batch = np.argmax(predicted_proba_batch, axis=1)
                 
-                db.upsert('accuracy_test', config, accuracy_score(y[splitter.test], predicted_test))
-                db.upsert('accuracy_selected', config, accuracy_score(y[selected], predicted_selected))
-                db.upsert('accuracy_batch', config, accuracy_score(y[batch], predicted_batch))
+            #     db.upsert('accuracy_test', config, accuracy_score(y[splitter.test], predicted_test))
+            #     db.upsert('accuracy_selected', config, accuracy_score(y[selected], predicted_selected))
+            #     db.upsert('accuracy_batch', config, accuracy_score(y[batch], predicted_batch))
 
-                # ================================================================================
+            #     # ================================================================================
 
-                # Contradictions
+            #     # Contradictions
 
-                if previous_predicted is not None:
-                    pre_predicted_test = previous_predicted[splitter.test]
-                    pre_predicted_selected = previous_predicted[splitter.selected_at(i)]
-                    pre_predicted_batch = previous_predicted[splitter.batch_at(i)]
+            #     if previous_predicted is not None:
+            #         pre_predicted_test = previous_predicted[splitter.test]
+            #         pre_predicted_selected = previous_predicted[splitter.selected_at(i)]
+            #         pre_predicted_batch = previous_predicted[splitter.batch_at(i)]
 
-                    db.upsert('contradiction_test', config, np.mean(np.argmax(pre_predicted_test, axis=1) != np.argmax(predicted_proba_test, axis=1)))
-                    db.upsert('contradiction_selected', config, np.mean(np.argmax(pre_predicted_selected, axis=1) != np.argmax(predicted_proba_selected, axis=1)))
-                    db.upsert('contradiction_batch', config, np.mean(np.argmax(pre_predicted_batch, axis=1) != np.argmax(predicted_proba_batch, axis=1)))
+            #         db.upsert('contradiction_test', config, np.mean(np.argmax(pre_predicted_test, axis=1) != np.argmax(predicted_proba_test, axis=1)))
+            #         db.upsert('contradiction_selected', config, np.mean(np.argmax(pre_predicted_selected, axis=1) != np.argmax(predicted_proba_selected, axis=1)))
+            #         db.upsert('contradiction_batch', config, np.mean(np.argmax(pre_predicted_batch, axis=1) != np.argmax(predicted_proba_batch, axis=1)))
 
-                # ================================================================================
+            #     # ================================================================================
 
-                # Exploration
+            #     # Exploration
 
-                post_selected = splitter.selected_at(i + 1)
+            #     post_selected = splitter.selected_at(i + 1)
 
-                distance_matrix = pairwise_distances(X[selected], X[splitter.test])
-                min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
-                post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
-                post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
+            #     distance_matrix = pairwise_distances(X[selected], X[splitter.test])
+            #     min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
+            #     post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
+            #     post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                 
-                db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
-                db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
-                db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
+            #     db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
+            #     db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
+            #     db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
 
-                # Batch Distance
-                post_closest = post_distance_matrix.min(axis=1)
-                closest = distance_matrix.min(axis=1)
+            #     # Batch Distance
+            #     post_closest = post_distance_matrix.min(axis=1)
+            #     closest = distance_matrix.min(axis=1)
                 
-                db.upsert('post_closest', config, np.mean(post_closest))
-                db.upsert('this_closest', config, np.mean(closest))
-                db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
+            #     db.upsert('post_closest', config, np.mean(post_closest))
+            #     db.upsert('this_closest', config, np.mean(closest))
+            #     db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
+
+
+            #     # ================================================================================
+
+            #     # Trustscore 
+            #     # Metric skipped for dataset 43551 because of invalid shape error when calling trustscorer.score() (shape in axis 1: 0.)
+
+            #     trustscorer = TrustScore()
+            #     score = np.nan
+            #     trustscorer.fit(X[selected], y[selected], classes=n_classes)
+            #     max_k = np.unique(y[selected], return_counts=True)[1].min() - 1
+            #     score = trustscorer.score(X[batch], predicted[batch], k=min(max_k, 10))[0].mean()
+            #     db.upsert('batch_trustscore', config, score)
+
+            #     np.random.seed(int(seed))
+            #     idx_sel = np.random.choice(splitter.test.sum())
+
+            #     score = trustscorer.score(X[splitter.test], predicted[splitter.test], k=min(max_k, 10))[0].mean()
+            #     db.upsert('test_trustscore', config, score)
+            #     score = trustscorer.score(X[selected], predicted[selected], k=min(max_k, 10))[0].mean()
+            #     db.upsert('self_trustscore', config, score)
+
+            #     # ================================================================================
+
+            #     # Violations
+
+            #     assertions = di.learn_assertions(pd.DataFrame(X[selected]), max_self_violation=1)
+            #     if assertions.size() > 0:
+            #         score = assertions.evaluate(pd.DataFrame(X[splitter.test]), explanation=True).row_wise_violation_summary['violation'].sum()
+            #         db.upsert('test_violation', config, score)
+            #         score = assertions.evaluate(pd.DataFrame(X[selected]), explanation=True).row_wise_violation_summary['violation'].sum()
+            #         db.upsert('self_violation', config, score)
+            #         score = assertions.evaluate(pd.DataFrame(X[batch]), explanation=True).row_wise_violation_summary['violation'].sum()
+            #         db.upsert('batch_violation', config, score)
+
+            #     else:
+            #         print('Assertions learning failed')
+            #         score = 0
+            #         db.upsert('test_violation', config,  score)
+            #         db.upsert('self_violation', config, score)
+            #         db.upsert('batch_violation', config, score)
+
+
+
+            #     # ================================================================================
+
+            #     # Agreement
+
+            #     knn = KNeighborsClassifier()
+            #     knn.fit(X[selected], y[selected])
+            #     db.upsert('agreement_test', config,  np.mean(knn.predict(X[splitter.test]) == predicted_test))
+            #     db.upsert('agreement_selected', config,  np.mean(knn.predict(X[selected]) == predicted_selected))
+            #     db.upsert('agreement_batch', config,  np.mean(knn.predict(X[batch]) == predicted_batch))
 
 
                 # ================================================================================
 
-                # Trustscore 
-                # Metric skipped for dataset 43551 because of invalid shape error when calling trustscorer.score() (shape in axis 1: 0.)
-
-                trustscorer = TrustScore()
-                score = np.nan
-                trustscorer.fit(X[selected], y[selected], classes=n_classes)
-                max_k = np.unique(y[selected], return_counts=True)[1].min() - 1
-                score = trustscorer.score(X[batch], predicted[batch], k=min(max_k, 10))[0].mean()
-                db.upsert('batch_trustscore', config, score)
-
-                np.random.seed(int(seed))
-                idx_sel = np.random.choice(splitter.test.sum())
-
-                score = trustscorer.score(X[splitter.test], predicted[splitter.test], k=min(max_k, 10))[0].mean()
-                db.upsert('test_trustscore', config, score)
-                score = trustscorer.score(X[selected], predicted[selected], k=min(max_k, 10))[0].mean()
-                db.upsert('self_trustscore', config, score)
-
-                # ================================================================================
-
-                # Violations
-
-                assertions = di.learn_assertions(pd.DataFrame(X[selected]), max_self_violation=1)
-                if assertions.size() > 0:
-                    score = assertions.evaluate(pd.DataFrame(X[splitter.test]), explanation=True).row_wise_violation_summary['violation'].sum()
-                    db.upsert('test_violation', config, score)
-                    score = assertions.evaluate(pd.DataFrame(X[selected]), explanation=True).row_wise_violation_summary['violation'].sum()
-                    db.upsert('self_violation', config, score)
-                    score = assertions.evaluate(pd.DataFrame(X[batch]), explanation=True).row_wise_violation_summary['violation'].sum()
-                    db.upsert('batch_violation', config, score)
-
-                else:
-                    print('Assertions learning failed')
-                    score = 0
-                    db.upsert('test_violation', config,  score)
-                    db.upsert('self_violation', config, score)
-                    db.upsert('batch_violation', config, score)
-
-
-
-                # ================================================================================
-
-                # Agreement
-
-                knn = KNeighborsClassifier()
-                knn.fit(X[selected], y[selected])
-                db.upsert('agreement_test', config,  np.mean(knn.predict(X[splitter.test]) == predicted_test))
-                db.upsert('agreement_selected', config,  np.mean(knn.predict(X[selected]) == predicted_selected))
-                db.upsert('agreement_batch', config,  np.mean(knn.predict(X[batch]) == predicted_batch))
-
-
-                # ================================================================================
-
-                # Save indexes
-
-                # if i==0:
-                #     config["type"] = "one per class"
-                #     for index in one_per_class:
-                #         db_idx.upsert('indexes', config, index)
-
-                #     config["type"] = "random"
-                #     for index in first_index:
-                #         db_idx.upsert('indexes', config, index)
-                    
-                #     config["type"] = "test"
-                #     for index in splitter.test:
-                #         db_idx.upsert('indexes', config, index)
-                
-                # elif i>0:
-                #     config["type"] = "train"
-                #     for index in splitter.batch_at(i):
-                #         db_idx.upsert('indexes', config, index)
-                # config.pop("type")
-
-
-
-                # if i==0:
-                #     for index in one_per_class:
-                #         db.upsert('indexes', config, 'one-per-class_{}'.format(index))
-
-                #     for index in first_index:
-                #         db.upsert('indexes', config, 'random_{}'.format(index))
-                    
-                #     for index in splitter.test:
-                #         db.upsert('indexes', config, 'test_{}'.format(index))
-                
-                # elif i>0:
-                #     for index in splitter.batch_at(i):
-                #         db.upsert('indexes', config, 'train_{}'.format(index))
-
-        
         #Saving indexes for reproducibility
+        """
+        Data types :
+        "one per class" = 0
+        "random" = 1
+        "test" = 2
+        """
 
         try:
             df_to_save = pd.read_csv('results_{}/indexes.csv'.format(dataset_id)) 
             #First unique indexes
-            df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "one per class", 'index':index} for index in one_per_class])
+            df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 0, 'index':index} for index in one_per_class])
             df_to_save = pd.concat([df_to_save, df], ignore_index=True)
         except:
             #First unique indexes
-            df_to_save = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "one per class", 'index':index} for index in one_per_class])
+            df_to_save = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 0, 'index':index} for index in one_per_class])
     
         # Randomly selected samples
-        df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "random", 'index':index} for index in first_index])
+        df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 1, 'index':index} for index in first_index])
         df_to_save = pd.concat([df_to_save, df], ignore_index=True)
         # Test indexes
-        df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': None, 'dataset':dataset_id, 'type': "test", 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
+        df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 2, 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
         df_to_save = pd.concat([df_to_save, df], ignore_index=True)
         # Train indexes
         # for i in range(n_iter):
