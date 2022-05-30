@@ -137,21 +137,15 @@ def preprocess_1502(data):
     return data, types, best_model
 
 
-def preprocess_40922(data):
-    types = [NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = RandomForestClassifier(max_depth=32)
-    return data, types, best_model
-
-
-def preprocess_43551(data):
-    types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT]
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
-    return data, types, best_model
-
-
 def preprocess_1590(data):
     types = [NUM, CAT, NUM, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, NUM, CAT]
     best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
+    return data, types, best_model
+
+
+def preprocess_40922(data):
+    types = [NUM, NUM, NUM, NUM, NUM, NUM]
+    best_model = RandomForestClassifier(max_depth=32)
     return data, types, best_model
 
 
@@ -164,11 +158,6 @@ def preprocess_41138(data):
     return data, types, best_model, transformer
 
 
-def preprocess_42395(data):
-    types = [DROP] + ([NUM] * 200)
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
-    return data, types, best_model
-
 def preprocess_41162(data):
     #Problème : problème d'encoding d'une valeur numérique (col 0) qui apparait dans le train mais pas dans le test ... PAS NORMAL CAR NUMERIQUE
     types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]    # 3ème et 4ème features ajoutées en catégorielles
@@ -178,6 +167,13 @@ def preprocess_41162(data):
         numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
 
+
+def preprocess_42395(data):
+    types = [DROP] + ([NUM] * 200)
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
+    return data, types, best_model
+
+
 def preprocess_42803(data):
     types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT,    NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME,      NUM        , DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location), NUM (31) (Local_Authority_(District) CAT -> NUM)
     best_model = GradientBoostingClassifier(max_depth=8, n_estimators=100)
@@ -186,9 +182,9 @@ def preprocess_42803(data):
         numeric_transformer = Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
 
-#TODO : fin update
+
 def preprocess_43439(data):
-    #TODO : extract hours and day of week more
+    #TODO : extract hours and day of week more ?
     # .weekday()
 
     # Adding new features to the dataset (extract hours and day of week more)
@@ -197,6 +193,12 @@ def preprocess_43439(data):
 
     types = [DROP, CAT, DATE2, DATE2, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
     best_model = GradientBoostingClassifier(max_depth=8, n_estimators=20)
+    return data, types, best_model
+
+
+def preprocess_43551(data):
+    types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT]
+    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
     return data, types, best_model
 
 
