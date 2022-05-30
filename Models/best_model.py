@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 # 41138, 41162, 42803, 43439 : attente best model
-for dataset_id in [41162]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
+for dataset_id in [42803]:#42803, 41162     #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
     #try:
         X, y, transformer, fake_estimator = get_openml(dataset_id)
         print('transformer', transformer)
@@ -28,6 +28,7 @@ for dataset_id in [41162]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 435
 
         sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=0)
         for i, (ind_learn, ind_test) in enumerate(sss.split(X, y)):
+            print("split :" ,i, "/", 5)
             isss = StratifiedShuffleSplit(n_splits=1, train_size=0.125, random_state=i)
             X_learn_raw, X_test_raw = X[ind_learn], X[ind_test]
             y_learn, y_test = y[ind_learn], y[ind_test]
@@ -57,7 +58,13 @@ for dataset_id in [41162]:      #[42395, 1590, 41138]:  # 1471, 1502, 40922, 435
                 X_test = transformer.transform(X_test_raw)
                 
                 for name, estimator, param_grid in estimators:
+                    # print(name)
                     model = GridSearchCV(estimator, param_grid, scoring='roc_auc_ovr')
+                    # for i in range(len(X_train[0])):
+                    #     if np.any(np.isnan(X_train[:,i])):
+                    #         print('[NAN SEARCH]  ',i, np.any(np.isnan(X_train[:,i])))
+                    # print('[NAN SEARCH 2]  ', np.any(np.isnan(y_train)))
+                    # continue
                     model.fit(X_train, y_train)
                     roc = model.score(X_test, y_test)
                     if best_model is None or roc > best_roc:
