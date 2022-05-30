@@ -95,7 +95,7 @@ dataset_id = args.dataset_id
 del args
 
 cwd = Path.cwd()
-db = CsvDb('results_{}-test'.format(dataset_id))
+db = CsvDb('results_{}'.format(dataset_id))
 # db_idx = CsvDb('results_{}'.format(dataset_id))
 
 X, y, transformer, best_model = get_openml(dataset_id)
