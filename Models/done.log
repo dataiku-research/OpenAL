@@ -57,3 +57,9 @@ Dataset 41162 Iter 1 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC
 Dataset 41162 Iter 2 Model GBDT Params {'max_depth': 3, 'n_estimators': 50} ROC 0.6854590094949474
 Dataset 41162 Iter 3 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.6755558519538425
 Dataset 41162 Iter 4 Model GBDT Params {'max_depth': 3, 'n_estimators': 100} ROC 0.6766008662469609
+
+Dataset 42803 Iter 0 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9203440604697892
+Dataset 42803 Iter 1 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9194921636597647
+Dataset 42803 Iter 2 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9191464430147368
+Dataset 42803 Iter 3 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9207853172510839
+Dataset 42803 Iter 4 Model GBDT Params {'max_depth': 8, 'n_estimators': 100} ROC 0.9197038054768928
