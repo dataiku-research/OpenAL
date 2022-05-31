@@ -157,6 +157,7 @@ def preprocess_41138(data):
         numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
 
+
 def preprocess_41162(data):
     #Problème : problème d'encoding d'une valeur numérique (col 0) qui apparait dans le train mais pas dans le test ... PAS NORMAL CAR NUMERIQUE
     types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]    # 3ème et 4ème features ajoutées en catégorielles
@@ -180,6 +181,7 @@ def preprocess_42803(data):
         types,
         numeric_transformer = Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
     return data, types, best_model, transformer
+
 
 def preprocess_43439(data):
     #TODO : extract hours and day of week more

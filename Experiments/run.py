@@ -170,6 +170,7 @@ for seed in range(10):
     # max_margin = np.load(str(precomputed_proba_path / 'max_margin.npy'))
     # max_entropy = np.load(str(precomputed_proba_path / 'max_entropy.npy'))
 
+
     for name_index, name in enumerate(methods):
         print(name)
 
