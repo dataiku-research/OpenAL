@@ -54,7 +54,6 @@ y_transformer = ColumnTransformer(transformers =[('num', StandardScaler(), ['acc
 
 
 # GET SCORES
-
 y_df = pd.DataFrame({'accuracy': df['accuracy'].values})   # y = df['accuracy']
 X_df = df.drop(labels=['seed', 'n_iter', 'accuracy'], axis=1)
 
@@ -79,6 +78,7 @@ y = y.reshape((y.shape[0]))
 
 #     model.fit(X_train, y_train)
 #     print('[SCORE] iter {}'.format(i),model.score(X_test,y_test))
+
 
 
 

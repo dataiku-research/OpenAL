@@ -14,6 +14,8 @@ import time
 import datetime
 import pandas as pd
 
+from tensorflow.keras.datasets import mnist, cifar10, cifar100
+
 
 # https://gist.github.com/devanshuDesai/d3bdc9270395490cae3b690632445e0e
 def transform_date_string_to_timestamp(date_col):
@@ -36,6 +38,17 @@ def transform_date2_string_to_timestamp(date_col):
     for sample in date_col:
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%Y-%m-%dT%H:%M:%SZ").timetuple()) if sample[0] is not None else None
     return date_col
+
+def transform_MNIST(X):
+    return X.astype('float32').reshape((X.shape[0], 28, 28, 1)) / 255.0
+
+def transform_CIFAR10(X):
+    #TODO 32x32 RGB image
+    return X
+
+def transform_CIFAR100(X):
+    #TODO 
+    return X
 
 
 class ColumnType(Enum):
@@ -201,6 +214,36 @@ def preprocess_43551(data):
     best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
     return data, types, best_model
 
+def preprocess_mnist():
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+    X = np.concatenate([X_train, X_test])
+    y = np.concatenate([y_train, y_test])
+    best_model = MLPClassifier()    #TODO
+    transformer = Pipeline([('MNIST preprocessing', FunctionTransformer(transform_MNIST))]) #TODO class transformer for images
+
+    return X, y, best_model, transformer
+
+def preprocess_cifar10():
+    (X_train, y_train), (X_test, y_test) = cifar10.load_data()
+
+    X = np.concatenate([X_train, X_test])
+    y = np.concatenate([y_train, y_test])
+    best_model = MLPClassifier()    #TODO
+    transformer = Pipeline([('CIFAR10 preprocessing', FunctionTransformer(transform_CIFAR10))]) #TODO class transformer for images
+
+    return X, y, best_model, transformer
+
+def preprocess_cifar100():
+    (X_train, y_train), (X_test, y_test) = cifar100.load_data()
+
+    X = np.concatenate([X_train, X_test])
+    y = np.concatenate([y_train, y_test])
+    best_model = MLPClassifier()    #TODO
+    transformer = Pipeline([('CIFAR100 preprocessing', FunctionTransformer(transform_CIFAR100))]) #TODO class transformer for images
+
+    return X, y, best_model, transformer
+
 
 def get_openml(dataset_id):
     funcs = {name:obj for name, obj in inspect.getmembers(sys.modules[__name__]) 
@@ -224,3 +267,34 @@ def get_openml(dataset_id):
     # print(X)
 
     return X.values, y, transformer, best_model
+
+
+def get_image_dataset(dataset_id):
+    funcs = {name:obj for name, obj in inspect.getmembers(sys.modules[__name__]) 
+                if (inspect.isfunction(obj) and name.startswith('preprocess'))}
+
+    func_name = 'preprocess_{}'.format(dataset_id)
+    if not func_name in funcs:
+        raise ValueError('No preprocessing found for dataset {}'.format(dataset_id))
+    
+    func = funcs[func_name]
+
+    preproc = func()
+    # if len(preproc) == 3:
+    #     X, types, best_model = preproc
+    #     transformer = BetterTransformer(types)
+    # else:
+    X, y, best_model, transformer = preproc
+    y = LabelEncoder().fit_transform(y)
+
+    # print(X)
+
+    return X, y, transformer, best_model
+
+
+def get_dataset(dataset_id):
+    # TODO : improve selection
+    if dataset_id in ['mnist']:
+        return get_image_dataset(dataset_id)
+    else:
+        return get_openml(dataset_id)
