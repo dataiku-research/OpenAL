@@ -77,18 +77,10 @@ class Tee(io.StringIO):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('dataset_id', type=int, help='Dataset to process')
+# parser.add_argument('dataset_id', type=int, help='Dataset to process')
+parser.add_argument('dataset_id', help='Dataset to process')
 
 args = parser.parse_args()
-
-# dataset_ids = []
-
-# OK
-# ok : 42395, 1502, 40922
-# 1461, 1590, 1471: Assertions learning failed
-# 43551 : problem metric trustscore (deleted for this dataset : problem shape)
-
-# OK 41138, 41162, 42803, 43439 : attente best model
 
 dataset_id = args.dataset_id
 
@@ -96,11 +88,16 @@ del args
 
 cwd = Path.cwd()
 db = CsvDb('results_{}'.format(dataset_id))
-# db_idx = CsvDb('results_{}'.format(dataset_id))
 
 # X, y, transformer, best_model = get_openml(dataset_id)
-X, y, transformer, best_model = get_dataset(dataset_id)
-X = transformer.fit_transform(X)
+preproc = get_dataset(dataset_id)
+if len(preproc) == 3:
+    DATA_TYPE = "image"
+    X, y, best_model = preproc
+else:
+    DATA_TYPE = "tabular"
+    X, y, transformer, best_model = preproc
+    X = transformer.fit_transform(X)
 
 get_clf = lambda: best_model
 fit_clf = lambda clf, X, y: clf.fit(X, y)

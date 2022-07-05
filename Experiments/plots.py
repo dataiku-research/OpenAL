@@ -4,7 +4,7 @@ import pandas as pd
 from cardinal.plotting import plot_confidence_interval
 
 
-PLOT_TYPE =  "variance"  #   "results", "variance", "correlations"
+PLOT_TYPE =  "results"  #   "results", "variance", "correlations"
 
 
 
@@ -22,7 +22,7 @@ metrics = [
 # PLOT RESULTS
 if PLOT_TYPE == "results":
     # dataset_id = 43551
-    dataset_ids = [1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162]
+    dataset_ids = ['mnist']    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr']
     for dataset_id in dataset_ids:
         for i, (metric_name, filename) in enumerate(metrics):
             try:

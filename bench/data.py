@@ -39,16 +39,16 @@ def transform_date2_string_to_timestamp(date_col):
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%Y-%m-%dT%H:%M:%SZ").timetuple()) if sample[0] is not None else None
     return date_col
 
-def transform_MNIST(X):
-    return X.astype('float32').reshape((X.shape[0], 28, 28, 1)) / 255.0
+# def transform_flatten_MNIST(X):
+#     return X.astype('float32').reshape((X.shape[0], -1)) / 255.0
 
-def transform_CIFAR10(X):
-    #TODO 32x32 RGB image
-    return X
+# def transform_CIFAR10(X):
+#     #TODO 32x32 RGB image
+#     return X
 
-def transform_CIFAR100(X):
-    #TODO 
-    return X
+# def transform_CIFAR100(X):
+#     #TODO 
+#     return X
 
 
 class ColumnType(Enum):
@@ -216,33 +216,61 @@ def preprocess_43551(data):
 
 def preprocess_mnist():
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
-
     X = np.concatenate([X_train, X_test])
     y = np.concatenate([y_train, y_test])
-    best_model = MLPClassifier()    #TODO
-    transformer = Pipeline([('MNIST preprocessing', FunctionTransformer(transform_MNIST))]) #TODO class transformer for images
 
-    return X, y, best_model, transformer
+    X = X.astype('float32').reshape((X.shape[0], -1)) / 255.0
+
+    best_model = MLPClassifier()    #TODO
+    # transformer = Pipeline([('MNIST preprocessing', FunctionTransformer(transform_flatten_MNIST))]) #TODO class transformer for images
+
+    return X, y, best_model#, transformer
 
 def preprocess_cifar10():
-    (X_train, y_train), (X_test, y_test) = cifar10.load_data()
-
-    X = np.concatenate([X_train, X_test])
-    y = np.concatenate([y_train, y_test])
     best_model = MLPClassifier()    #TODO
-    transformer = Pipeline([('CIFAR10 preprocessing', FunctionTransformer(transform_CIFAR10))]) #TODO class transformer for images
+    folder_path = "/data.nfs/data_al/cifar10/"
 
-    return X, y, best_model, transformer
+    # Embeddings from ImageNet
+    X = np.load(folder_path+'cifar_embeddings.npy')
+    y = np.load(folder_path+'cifar_target.npy')
+
+    # Transformation to fit with the script (will be transformed later)
+    y = np.argmax(y,axis=1)
+
+    return X, y, best_model#, transformer
+
+def preprocess_cifar10_simclr():
+    best_model = MLPClassifier()
+    folder_path = "/data.nfs/data_al/cifar10/"
+
+    # Embeddings from contrastive learning
+    X = np.load(folder_path+'simclr_embed.npy')
+    y = np.load(folder_path+'simclr_labels.npy')
+
+    return X, y, best_model
 
 def preprocess_cifar100():
-    (X_train, y_train), (X_test, y_test) = cifar100.load_data()
+    best_model = MLPClassifier()
+    folder_path = "/data.nfs/data_al/cifar100/"
 
-    X = np.concatenate([X_train, X_test])
-    y = np.concatenate([y_train, y_test])
-    best_model = MLPClassifier()    #TODO
-    transformer = Pipeline([('CIFAR100 preprocessing', FunctionTransformer(transform_CIFAR100))]) #TODO class transformer for images
+    # Embeddings from ImageNet
+    X = np.load(folder_path+'cifar_embeddings.npy')
+    y = np.load(folder_path+'cifar_target.npy')
 
-    return X, y, best_model, transformer
+    # Transformation to fit with the script (will be transformed later)
+    y = np.argmax(y,axis=1)
+
+    return X, y, best_model#, transformer
+
+def preprocess_cifar100_simclr():
+    best_model = MLPClassifier(max_iter=2000)
+    folder_path = "/data.nfs/data_al/cifar100/"
+
+    # Embeddings from contrastive learning
+    X = np.load(folder_path+'simclr_embed.npy')
+    y = np.load(folder_path+'simclr_labels.npy')
+
+    return X, y, best_model
 
 
 def get_openml(dataset_id):
@@ -280,21 +308,15 @@ def get_image_dataset(dataset_id):
     func = funcs[func_name]
 
     preproc = func()
-    # if len(preproc) == 3:
-    #     X, types, best_model = preproc
-    #     transformer = BetterTransformer(types)
-    # else:
-    X, y, best_model, transformer = preproc
+    X, y, best_model = preproc
+
     y = LabelEncoder().fit_transform(y)
 
-    # print(X)
-
-    return X, y, transformer, best_model
+    return X, y, best_model
 
 
 def get_dataset(dataset_id):
-    # TODO : improve selection
-    if dataset_id in ['mnist']:
+    if dataset_id in ['mnist','cifar10','cifar100','cifar10_simclr','cifar100_simclr']:
         return get_image_dataset(dataset_id)
     else:
         return get_openml(dataset_id)

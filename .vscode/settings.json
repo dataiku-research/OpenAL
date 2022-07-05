@@ -1,9 +1,9 @@
 {
     "python.autoComplete.extraPaths": [
-        "/home/wjonas/al/bin/python"
+        "/home/wjonas/venv/bin/python"
     ],
     "python.analysis.extraPaths": [
-        "/home/wjonas/al/bin/python",
+        "/home/wjonas/venv/bin/python",
     ],
     "git.ignoreLimitWarning": true
 }
