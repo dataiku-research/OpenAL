@@ -105,3 +105,10 @@ predict if the car purchased at the Auction is a Kick (if the vehicle have serio
 number of instances	72983
 number of features	33
 number of classes	2
+
+
+
+#### REquirements.txt
+https://pypi.org/project/pipreqs/
+
+

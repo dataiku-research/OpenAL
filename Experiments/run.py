@@ -218,7 +218,7 @@ for seed in range(10):
                 fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                 predicted = _get_probability_classes(classifier, X)
         
-                params = dict(batch_size=batch_size, clf=classifier, iter=i + 1, splitter=splitter)
+                params = dict(batch_size=batch_size, clf=classifier)    #iter=i + 1, splitter=splitter
                 X_test = X[splitter.test]
                 params['X_test'] = X_test
 

@@ -134,37 +134,37 @@ class BetterTransformer(TransformerMixin):
 def preprocess_1461(data):
     types = [NUM, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT]
     data['V14'].replace(-1, data['V14'].max() + 1, inplace=True)
-    best_model = RandomForestClassifier(max_depth=8)
+    best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_1471(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam', max_iter=2000)
+    best_model = lambda seed: MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), solver='adam', max_iter=2000, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_1502(data):
     types = [NUM, NUM, NUM]
-    best_model = RandomForestClassifier(max_depth=32, n_estimators=50)
+    best_model = lambda seed: RandomForestClassifier(max_depth=32, n_estimators=50, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_1590(data):
     types = [NUM, CAT, NUM, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, NUM, CAT]
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=3, n_estimators=20, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_40922(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM]
-    best_model = RandomForestClassifier(max_depth=32)
+    best_model = lambda seed: RandomForestClassifier(max_depth=32, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_41138(data):
     types = [NUM] * 170
-    best_model = RandomForestClassifier(max_depth=8)
+    best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
     transformer = BetterTransformer(
         types,
         numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
@@ -174,7 +174,7 @@ def preprocess_41138(data):
 def preprocess_41162(data):
     #Problème : problème d'encoding d'une valeur numérique (col 0) qui apparait dans le train mais pas dans le test ... PAS NORMAL CAR NUMERIQUE
     types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]    # 3ème et 4ème features ajoutées en catégorielles
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=100)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=3, n_estimators=100, random_state=seed)
     transformer = BetterTransformer(
         types,
         numeric_transformer=Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
@@ -183,13 +183,13 @@ def preprocess_41162(data):
 
 def preprocess_42395(data):
     types = [DROP] + ([NUM] * 200)
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=3, n_estimators=20, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_42803(data):
     types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT,    NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME,      NUM        , DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location), NUM (31) (Local_Authority_(District) CAT -> NUM)
-    best_model = GradientBoostingClassifier(max_depth=8, n_estimators=100)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=8, n_estimators=100, random_state=seed)
     transformer = BetterTransformer(
         types,
         numeric_transformer = Pipeline([('Imputer', SimpleImputer(strategy='median')), ('Scaler', StandardScaler())]))
@@ -205,13 +205,13 @@ def preprocess_43439(data):
     # weekday_col = transform_date2_string_to_timestamp(date_col)
 
     types = [DROP, CAT, DATE2, DATE2, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT] 
-    best_model = GradientBoostingClassifier(max_depth=8, n_estimators=20)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=8, n_estimators=20, random_state=seed)
     return data, types, best_model
 
 
 def preprocess_43551(data):
     types = [NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT]
-    best_model = GradientBoostingClassifier(max_depth=3, n_estimators=20)
+    best_model = lambda seed: GradientBoostingClassifier(max_depth=3, n_estimators=20, random_state=seed)
     return data, types, best_model
 
 def preprocess_mnist():
@@ -221,13 +221,13 @@ def preprocess_mnist():
 
     X = X.astype('float32').reshape((X.shape[0], -1)) / 255.0
 
-    best_model = MLPClassifier()    #TODO
+    best_model = lambda seed: MLPClassifier(random_state=seed)    #TODO
     # transformer = Pipeline([('MNIST preprocessing', FunctionTransformer(transform_flatten_MNIST))]) #TODO class transformer for images
 
     return X, y, best_model#, transformer
 
 def preprocess_cifar10():
-    best_model = MLPClassifier()    #TODO
+    best_model = lambda seed: MLPClassifier(random_state=seed)    #TODO
     folder_path = "/data.nfs/data_al/cifar10/"
 
     # Embeddings from ImageNet
@@ -240,7 +240,7 @@ def preprocess_cifar10():
     return X, y, best_model#, transformer
 
 def preprocess_cifar10_simclr():
-    best_model = MLPClassifier()
+    best_model = lambda seed: MLPClassifier(random_state=seed)
     folder_path = "/data.nfs/data_al/cifar10/"
 
     # Embeddings from contrastive learning
@@ -250,7 +250,7 @@ def preprocess_cifar10_simclr():
     return X, y, best_model
 
 def preprocess_cifar100():
-    best_model = MLPClassifier()
+    best_model = lambda seed: MLPClassifier(random_state=seed)
     folder_path = "/data.nfs/data_al/cifar100/"
 
     # Embeddings from ImageNet
@@ -263,7 +263,7 @@ def preprocess_cifar100():
     return X, y, best_model#, transformer
 
 def preprocess_cifar100_simclr():
-    best_model = MLPClassifier(max_iter=2000)
+    best_model = lambda seed: MLPClassifier(max_iter=2000, random_state=seed)
     folder_path = "/data.nfs/data_al/cifar100/"
 
     # Embeddings from contrastive learning
