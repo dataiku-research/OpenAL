@@ -17,10 +17,16 @@ Welcome to Benchmark Active Learning's documentation!
 
    start
 
+.. toctree::
+   :maxdepth: 2
+   :caption: How to define a sampler with dynamic instantiation parameters
+
+   custom_sampler
+
 
 .. toctree::
    :maxdepth: 2
-   :caption: Results
+   :caption: Benchmark results
 
    results
 

@@ -10,7 +10,7 @@ How to use the benchmark and evaluate your own sampler
 Installation
 ============
 
-The first step is to clone the benchmark GitHub repository.
+The first step is to **fork** or clone the benchmark GitHub repository.
 
 .. code-block:: bash
 
@@ -137,3 +137,12 @@ On the other hand, if you choosed to define your input parameters inside the ``m
 
     python main.py [dataset_id]
 
+
+Save your results
+=================
+
+After you ran the benchmark for the dataset, a window will automatically pop-up and you will have the possibility to merge your sampler results inside benchmark results.
+
+If you accept to share your results to the AL community, you just need to **create a Git Pull Request in the main repository** so that your experiments could be verified and merged into the main repository. 
+
+Then your results would be available to everyone
