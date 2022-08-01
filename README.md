@@ -108,7 +108,7 @@ number of classes	2
 
 
 
-#### REquirements.txt
+#### Requirements.txt
 https://pypi.org/project/pipreqs/
 
 
