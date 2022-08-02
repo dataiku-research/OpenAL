@@ -134,7 +134,8 @@ class BetterTransformer(TransformerMixin):
 def preprocess_1461(data):
     types = [NUM, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT]
     data['V14'].replace(-1, data['V14'].max() + 1, inplace=True)
-    best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
+    # best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
+    best_model = lambda seed: RandomForestClassifier(max_depth=8)
     return data, types, best_model
 
 

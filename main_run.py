@@ -82,13 +82,19 @@ class Tee(io.StringIO):
         return False
 
 
-def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_custom_sampler'):
+# def run_benchmark(new_sampler_generator, 
+#                 datasets_ids:list(string)=['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], 
+#                 sampler_name:string = 'my_custom_sampler'):
 
-    assert sampler_name is not None
-    assert dataset_id is not None
-    assert type(dataset_id) == str
-    assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']
+#     assert sampler_name is not None
+#     assert dataset_id is not None
+#     assert type(dataset_id) == str
+#     assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']
 
+#     run(dataset_id, new_sampler_generator, sampler_name)
+
+
+def run_benchmark(dataset_id, new_sampler_generator, sampler_name):
     db = CsvDb('user_results/results_{}/db'.format(dataset_id))
 
     # X, y, transformer, best_model = get_openml(dataset_id)
@@ -108,12 +114,17 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
 
     k_start = False
 
-    n_iter = 10
-    n_seed = 2
-    batch_size = int(.001 * X.shape[0])
+    args = {
+        "n_seed" : 10, 
+        'n_iter' : 10, 
+        'batch_size' : int(.001 * X.shape[0])
+        }
+    # n_iter = 10
+    # n_seed = 2
+    # batch_size = int(.01 * X.shape[0])
 
 
-    start_size = batch_size
+    start_size = args['batch_size']
     two_step_beta = 10
     # oracle_error = False
 
@@ -136,7 +147,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
     # model_cache = dict()
 
 
-    for seed in range(n_seed):
+    for seed in range(args['n_seed']):
         print('Iteration {}'.format(seed))
         methods = {
             # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
@@ -168,7 +179,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
             config = dict(
                 seed=seed,
                 method=name,
-                n_iter=n_iter - 1,
+                n_iter=args['n_iter'] - 1,
                 dataset=dataset_id
             )
 
@@ -188,7 +199,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                 # one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
                 one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
                 splitter.add_batch(one_per_class)
-                
+    
                 if not k_start:
                     # first_index, _ = train_test_split(
                     #     np.arange(X[splitter.non_selected].shape[0]),
@@ -196,6 +207,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                     #     random_state=int(seed),
                     #     stratify=y[splitter.non_selected])
                     first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+
                 else:
                     start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
                     start_sampler.fit(X[splitter.non_selected])
@@ -208,12 +220,12 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                 assert(splitter.selected.sum() == start_size)
                 assert(splitter.current_iter == 0)
 
-                for i in range(n_iter):
+                for i in range(args['n_iter']):
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
             
-                    DYNAMIC_PARAMS = dict(batch_size=batch_size, clf=classifier, seed=int(seed), iteration=i)  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
+                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i)  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
                     # X_test = X[splitter.test]
                     # params['X_test'] = X_test
 
@@ -225,8 +237,8 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                     splitter.add_batch(new_selected_index)
 
                     assert(splitter.current_iter == (i + 1))
-                    assert(splitter.selected_at(i + 1).sum() == ((i + 1) * batch_size))
-                    assert(splitter.batch_at(i + 1).sum() == batch_size)
+                    assert(splitter.selected_at(i + 1).sum() == ((i + 1) * args['batch_size']))
+                    assert(splitter.batch_at(i + 1).sum() == args['batch_size'])
 
                     config = dict(
                         seed=seed,
@@ -397,13 +409,13 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
 
 
     # Plots results from saved csv
-    plot_results(dataset_id, n_iter, n_seed)
+    plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'])
 
     # Propose to merge current sampler results to benchmark resutls
     share_results(dataset_id)
 
 
-def plot_results(dataset_id, n_iter, n_seed):
+def plot_results(dataset_id, n_iter, n_seed, show=False):
 
     x_data = np.arange(n_iter)
 
@@ -470,7 +482,8 @@ def plot_results(dataset_id, n_iter, n_seed):
         # except:
         #     print("[ERROR] Problem occured when trying to plot {} metric values".format(metric_name))
 
-    plt.show()
+    if show:
+        plt.show()
 
 
 def load_indexes(dataset_id, seed, type):
@@ -549,12 +562,13 @@ def run_benchmark2(dataset_id):
     for seed in range(n_seed):
         print('Iteration {}'.format(seed))
         methods = {
-            'random-2': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=int(seed)),
+            # 'random-2': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=int(seed)),
             'margin-2': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'confidence-2': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'entropy-2': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'kmeans-2': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=int(seed)), batch_size=params['batch_size']),
-            'wkmeans-2': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+            # 'confidence-2': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'entropy-2': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'kmeans-2': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=int(seed)), batch_size=params['batch_size']),
+            # 'wkmeans-2': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+            
             # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
             # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
@@ -832,3 +846,10 @@ def run_benchmark2(dataset_id):
 
 
 
+
+
+
+if __name__ == '__main__':
+
+    indexes = load_indexes(1461, 0, type="one_class")
+    print(indexes)

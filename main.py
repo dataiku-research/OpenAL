@@ -45,6 +45,6 @@ new_sampler_generator = get_my_sampler
 
 sampler_name = 'my_custom_sampler' #TODO : change the name of your sampler if you want to
 
-run_benchmark(dataset_id, new_sampler_generator=new_sampler_generator, sampler_name=sampler_name)
+# run_benchmark(dataset_id, new_sampler_generator=new_sampler_generator, sampler_name=sampler_name)
 
-# run_benchmark2(dataset_id)
+run_benchmark2(dataset_id)
