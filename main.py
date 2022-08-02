@@ -1,8 +1,10 @@
 import argparse
+import shutil
 
-from main_run import run_benchmark
+from main_run import run_benchmark, run_benchmark2
 from my_sampler import MyCustomSamplerClass
 
+from cardinal.uncertainty import MarginSampler
 
 def get_my_sampler(params : dict) : 
     """
@@ -14,17 +16,17 @@ def get_my_sampler(params : dict) :
     """
 
     # TODO : add your custom sampler parameters and remove the default ones if not useful
-    sampler = MyCustomSamplerClass(
-        # remove some of these parameters if not useful
-        batch_size = params['batch_size'],
-        classifier = params['clf'],
-        iteration = params['iteration'],    # AL iteration
-        random_state = params['seed'],      # Important for reproducibility purpose (Use it as much as possible)
+    # sampler = MyCustomSamplerClass(
+    #     # remove some of these parameters if not useful
+    #     batch_size = params['batch_size'],
+    #     classifier = params['clf'],
+    #     iteration = params['iteration'],    # AL iteration
+    #     random_state = params['seed'],      # Important for reproducibility purpose (Use it as much as possible)
         
-        # add you custom parameters here
+    #     # add you custom parameters here
 
-    )
-
+    # )
+    sampler = MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True)
     return sampler
 
 
@@ -38,8 +40,11 @@ del args
 new_sampler_generator = get_my_sampler
 
 #TODO you might need to remove the previous result folder (with the same dataset id) before doing another run of the benchmark
-# ! rm -r results_1461
+# ! rm -r user_results/results_1461
+# shutil.rmtree('user_results/results_1461/', ignore_errors=True)
 
 sampler_name = 'my_custom_sampler' #TODO : change the name of your sampler if you want to
 
 run_benchmark(dataset_id, new_sampler_generator=new_sampler_generator, sampler_name=sampler_name)
+
+# run_benchmark2(dataset_id)

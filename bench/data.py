@@ -319,4 +319,4 @@ def get_dataset(dataset_id):
     if dataset_id in ['mnist','cifar10','cifar100','cifar10_simclr','cifar100_simclr']:
         return get_image_dataset(dataset_id)
     else:
-        return get_openml(dataset_id)
+        return get_openml(int(dataset_id))
