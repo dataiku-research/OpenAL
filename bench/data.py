@@ -134,7 +134,8 @@ class BetterTransformer(TransformerMixin):
 def preprocess_1461(data):
     types = [NUM, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT]
     data['V14'].replace(-1, data['V14'].max() + 1, inplace=True)
-    best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
+    # best_model = lambda seed: RandomForestClassifier(max_depth=8, random_state=seed)
+    best_model = lambda seed: RandomForestClassifier(max_depth=8)
     return data, types, best_model
 
 
@@ -319,4 +320,4 @@ def get_dataset(dataset_id):
     if dataset_id in ['mnist','cifar10','cifar100','cifar10_simclr','cifar100_simclr']:
         return get_image_dataset(dataset_id)
     else:
-        return get_openml(dataset_id)
+        return get_openml(int(dataset_id))

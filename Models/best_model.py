@@ -9,7 +9,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 import numpy as np
 import pandas as pd
 
-# 41138, 41162, 42803, 43439 : attente best model
+# 1471, 1502, 40922, 43551, 1461, 42803, 41162, 42395, 1590, 41138
 for dataset_id in [42803]:#42803, 41162     #[42395, 1590, 41138]:  # 1471, 1502, 40922, 43551, 1461]:
     #try:
         X, y, transformer, fake_estimator = get_openml(dataset_id)
@@ -32,6 +32,9 @@ for dataset_id in [42803]:#42803, 41162     #[42395, 1590, 41138]:  # 1471, 1502
             isss = StratifiedShuffleSplit(n_splits=1, train_size=0.125, random_state=i)
             X_learn_raw, X_test_raw = X[ind_learn], X[ind_test]
             y_learn, y_test = y[ind_learn], y[ind_test]
+            # if i == 0:
+            #     print('[INFO] y size ', dataset_id, len(np.unique(y_learn)))
+            #     print('[INFO] y size ', dataset_id, np.unique(y_learn))
             
             best_model = None
             best_roc = None
@@ -72,6 +75,7 @@ for dataset_id in [42803]:#42803, 41162     #[42395, 1590, 41138]:  # 1471, 1502
                         best_params = model.best_params_
                         best_roc = roc
             
+
             print('Dataset {} Iter {} Model {} Params {} ROC {}'.format(dataset_id, i, best_model, best_params, best_roc))
 
     #except Exception as e:

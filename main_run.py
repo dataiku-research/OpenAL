@@ -2,7 +2,7 @@ from functools import partial
 import os
 import string
 import sys
-
+from sys import exit
 
 sys.path.append('..')
 sys.path.append('.')
@@ -19,6 +19,8 @@ import pandas as pd
 from datetime import datetime
 from bench.csv_db import CsvDb
 from bench.data import get_openml, get_dataset
+
+from Experiments.share_results import share_results
 
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import MiniBatchKMeans
@@ -80,9 +82,26 @@ class Tee(io.StringIO):
         return False
 
 
-def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_custom_sampler'):
+def run_benchmark(new_sampler_generator, 
+                datasets_ids:list=['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], 
+                sampler_name:string = 'my_custom_sampler'):
 
-    db = CsvDb('results_{}'.format(dataset_id))
+    assert sampler_name is not None
+    assert datasets_ids is not None
+    assert type(datasets_ids) == list, f'{datasets_ids} is of type {type(datasets_ids)} instead of type "list"'
+    if len(datasets_ids) == 0 : datasets_ids = ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']
+    for dataset_id in datasets_ids:
+        assert (dataset_id is not None)
+        assert type(dataset_id) == str, f'{dataset_id} is of type {type(dataset_id)} instead of type "str"'
+        assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], f"{dataset_id} not in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']"
+
+    for dataset_id in datasets_ids:
+        run(dataset_id, new_sampler_generator, sampler_name)
+
+
+def run(dataset_id, new_sampler_generator, sampler_name):
+    print(f'\n--- RUN DATASET {dataset_id} ---\n')
+    db = CsvDb('user_results/results_{}/db'.format(dataset_id))
 
     # X, y, transformer, best_model = get_openml(dataset_id)
     preproc = get_dataset(dataset_id)
@@ -101,12 +120,17 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
 
     k_start = False
 
-    n_iter = 10
-    n_seed = 10
-    batch_size = int(.001 * X.shape[0])
+    args = {
+        "n_seed" : 10, 
+        'n_iter' : 10, 
+        'batch_size' : int(.001 * X.shape[0])
+        }
+    # n_iter = 10
+    # n_seed = 2
+    # batch_size = int(.01 * X.shape[0])
 
 
-    start_size = batch_size
+    start_size = args['batch_size']
     two_step_beta = 10
     # oracle_error = False
 
@@ -129,7 +153,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
     # model_cache = dict()
 
 
-    for seed in range(n_seed):
+    for seed in range(args['n_seed']):
         print('Iteration {}'.format(seed))
         methods = {
             # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
@@ -138,10 +162,16 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
             # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
             # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-
             # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
             # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
+
+            # 'random-2': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+            # 'margin-2': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'confidence-2': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'entropy-2': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'kmeans-2': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+            # 'wkmeans-2': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
         }
 
         # Add new sampler method in the evaluated methods
@@ -155,7 +185,7 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
             config = dict(
                 seed=seed,
                 method=name,
-                n_iter=n_iter - 1,
+                n_iter=args['n_iter'] - 1,
                 dataset=dataset_id
             )
 
@@ -163,20 +193,27 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
             # Capture the output for logging
             with Tee() as tee:
 
-                splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
-                
+                # splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
+                test_indexes = load_indexes(dataset_id, seed, type='test')
+                mask = np.full(X.shape[0], -1, dtype=np.int8)
+                mask[test_indexes] = -2
+                splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
+
                 method = methods[name]
 
                 # First, get at least one sample for each class
-                one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
+                # one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
+                one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
                 splitter.add_batch(one_per_class)
-                
+    
                 if not k_start:
-                    first_index, _ = train_test_split(
-                        np.arange(X[splitter.non_selected].shape[0]),
-                        train_size=start_size - one_per_class.shape[0],
-                        random_state=int(seed),
-                        stratify=y[splitter.non_selected])
+                    # first_index, _ = train_test_split(
+                    #     np.arange(X[splitter.non_selected].shape[0]),
+                    #     train_size=start_size - one_per_class.shape[0],
+                    #     random_state=int(seed),
+                    #     stratify=y[splitter.non_selected])
+                    first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+
                 else:
                     start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
                     start_sampler.fit(X[splitter.non_selected])
@@ -189,16 +226,16 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                 assert(splitter.selected.sum() == start_size)
                 assert(splitter.current_iter == 0)
 
-                for i in range(n_iter):
+                for i in range(args['n_iter']):
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
             
-                    params = dict(batch_size=batch_size, clf=classifier, seed=int(seed), iteration=i)    #iter=i + 1, splitter=splitter
-                    X_test = X[splitter.test]
-                    params['X_test'] = X_test
+                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i)  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
+                    # X_test = X[splitter.test]
+                    # params['X_test'] = X_test
 
-                    sampler = method(params)
+                    sampler = method(DYNAMIC_PARAMS)
                     sampler.fit(X[splitter.selected], y[splitter.selected])
 
                     new_selected_index = sampler.select_samples(X[splitter.non_selected])
@@ -206,8 +243,8 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
                     splitter.add_batch(new_selected_index)
 
                     assert(splitter.current_iter == (i + 1))
-                    assert(splitter.selected_at(i + 1).sum() == ((i + 1) * batch_size))
-                    assert(splitter.batch_at(i + 1).sum() == batch_size)
+                    assert(splitter.selected_at(i + 1).sum() == ((i + 1) * args['batch_size']))
+                    assert(splitter.batch_at(i + 1).sum() == args['batch_size'])
 
                     config = dict(
                         seed=seed,
@@ -327,49 +364,64 @@ def run_benchmark(dataset_id, new_sampler_generator, sampler_name:string = 'my_c
 
                     # ================================================================================
 
-            #Saving indexes for reproducibility
-            """
-            Data types :
-            "one per class" = 0
-            "random" = 1
-            "test" = 2
-            """
-
-            try:
-                df_to_save = pd.read_csv('results_{}/indexes.csv'.format(dataset_id)) 
-                #First unique indexes
-                df = pd.DataFrame([{'seed': int(seed), 'method': int(name_index), 'type': 0, 'index':index} for index in one_per_class])
-                df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            except:
-                #First unique indexes
-                df_to_save = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 0, 'index':index} for index in one_per_class])
-        
-            # Randomly selected samples
-            df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 1, 'index':index} for index in first_index])
-            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            # Test indexes
-            df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 2, 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
-            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            # Train indexes
-            # for i in range(n_iter):
-            #     df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': i+1, 'dataset':dataset_id, 'type': "train", 'index':index} for index, is_in_train_set in enumerate(splitter.batch_at(i + 1)) if is_in_train_set])
-            #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            
-            df_to_save.to_csv('results_{}/indexes.csv'.format(dataset_id), index=False)
-
-
             log_folder = Path('logs')
             log_folder.mkdir(exist_ok=True)
             with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
                 f.write(tee.read())
+        
+
+        #Saving indexes for reproducibility
+        """
+        Data types :
+        "one per class" = 0
+        "random" = 1
+        "test" = 2
+        """
+
+                    # try:
+                    #     df_to_save = pd.read_csv('user_results/results_{}/indexes.csv'.format(dataset_id)) 
+                    #     #First unique indexes
+                    #     df = pd.DataFrame([{'seed': int(seed), 'type': 0, 'index':index} for index in one_per_class])
+                    #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+                    # except:
+                    #     #First unique indexes
+                    #     df_to_save = pd.DataFrame([{'seed': seed, 'type': 0, 'index':index} for index in one_per_class])
+                
+                    # # Randomly selected samples
+                    # df = pd.DataFrame([{'seed': seed, 'type': 1, 'index':index} for index in first_index])
+                    # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+                    # # Test indexes
+                    # df = pd.DataFrame([{'seed': seed, 'type': 2, 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
+                    # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+                    
+                    # df_to_save.to_csv('user_results/results_{}/indexes.csv'.format(dataset_id), index=False)
+
+
+        # #TODO : use this only when runing initial benchmark (and not on client side) because it's very long
+        # # We define a column 'index_id__not_used' in order to define different csv indexes for save indexes with the save type (if we don't do so, Csv db saves only one index from each type)
+        # # One per class
+        # for index_id, index in enumerate(one_per_class):
+        #     dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
+        #     db.upsert('indexes', dic,  int(index))
+        # # Randomly selected samples
+        # for index_id, index in enumerate(first_index):
+        #     dic = dict(seed=int(seed), type=1, index_id__not_used=index_id)
+        #     db.upsert('indexes', dic,  int(index))
+        # # Test indexes
+        # for index_id, (index, is_in_test_set) in enumerate(enumerate(splitter.test)):
+        #     if is_in_test_set:
+        #         dic = dict(seed=int(seed), type=2, index_id__not_used=index_id)
+        #         db.upsert('indexes', dic,  int(index))
+
 
     # Plots results from saved csv
-    plot_results(dataset_id, n_iter, n_seed)
+    plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'])
+
+    # Propose to merge current sampler results to benchmark resutls
+    share_results(dataset_id)
 
 
-
-
-def plot_results(dataset_id, n_iter, n_seed):
+def plot_results(dataset_id, n_iter, n_seed, show=False):
 
     x_data = np.arange(n_iter)
 
@@ -385,12 +437,13 @@ def plot_results(dataset_id, n_iter, n_seed):
     # dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
     # for dataset_id in dataset_ids:
     for i, (metric_name, filename) in enumerate(metrics):
+            print('\n',metric_name, '\n')
         # try:
 
             # Plot new sampler results
 
-            df = pd.read_csv(f'results_{dataset_id}/{filename}')
-            sampler_name = np.unique(df["method"].values)[0]    #TODO
+            df = pd.read_csv(f'user_results/results_{dataset_id}/db/{filename}')
+            # sampler_name = np.unique(df["method"].values)[0]    #TODO
 
             #Loop in case their are several samplers tested here
             method_names = np.unique(df["method"].values)
@@ -407,7 +460,7 @@ def plot_results(dataset_id, n_iter, n_seed):
             # Plot other samplers results from the benchmark
 
             # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-            df = pd.read_csv(f'Experiments/results_{dataset_id}/{filename}')
+            df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
             method_names = np.unique(df["method"].values)
 
             for sampler_name in method_names:
@@ -425,7 +478,7 @@ def plot_results(dataset_id, n_iter, n_seed):
             plt.title('{} metric'.format(metric_name))
             plt.legend()
             plt.tight_layout()
-            plt.savefig(f'results_{dataset_id}/plot-'+metric_name+'.png')
+            plt.savefig(f'user_results/results_{dataset_id}/plot-'+metric_name+'.png')
             # plt.clf()
 
             # We only show the accuracy to the user, other metrics are still saved
@@ -435,21 +488,25 @@ def plot_results(dataset_id, n_iter, n_seed):
         # except:
         #     print("[ERROR] Problem occured when trying to plot {} metric values".format(metric_name))
 
-    plt.show()
+    if show:
+        plt.show()
 
 
-# def plot_benchmark_sampler_results(fig_idx, dataset_id, filename, x_data, n_seed):
+def load_indexes(dataset_id, seed, type):
+    """
+    Instead of only seeding the random initialisation, we use the indexes that have been saved during the previous benchmark run.
+    Hence, all the samplers will have the same random initialisation samples
+    """
+    if type == 'one_class':
+        type = 0
+    elif type == 'random':
+        type = 1
+    elif type == 'test':
+        type = 2 
+    else:
+        exit(f'[ERROR] Can’t load indexes from type {type}')
 
-#     df = pd.read_csv(f'Experiments/results_{dataset_id}/{filename}')
-#     method_names = np.unique(df["method"].values)
+    df = pd.read_csv(f'Experiments/results_{dataset_id}/db/indexes.csv')
 
-#     for sampler_name in method_names:
-#         all_metric = []
-#         for seed in range(n_seed):
-#             metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-#             all_metric.append(metric)
-        
-#         plt.figure(fig_idx, figsize=(15,10))
-#         plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
-#         print(f"plot {sampler_name}")
-#     return
+    # return df.loc[(df["seed"] == seed) & (df["type"]== type)]['value'].values   # TODO When column name will be updated
+    return df.loc[(df["seed"] == seed) & (df["type"]== type)]['index'].values   
