@@ -93,7 +93,7 @@ def run_benchmark(new_sampler_generator,
     for dataset_id in datasets_ids:
         assert (dataset_id is not None)
         assert type(dataset_id) == str, f'{dataset_id} is of type {type(dataset_id)} instead of type "str"'
-        assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], f"{dataset_id} not in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']"
+        assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], f"{dataset_id} not in available datasets :\n- 1461 \n- 1471\n- 1502\n- 1590\n- 40922\n- 41138\n- 42395\n- 43439\n- 43551\n- 42803\n- 41162\n- cifar10\n- cifar10_simclr\n- mnist"
 
     for dataset_id in datasets_ids:
         run(dataset_id, new_sampler_generator, sampler_name)
@@ -101,7 +101,9 @@ def run_benchmark(new_sampler_generator,
 
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
-    db = CsvDb('user_results/results_{}/db'.format(dataset_id))
+
+    if not os.path.isdir(f'user_results/results_{dataset_id}/'): os.makedirs(f'user_results/results_{dataset_id}/')
+    db = CsvDb(f'user_results/results_{dataset_id}/db')
 
     # X, y, transformer, best_model = get_openml(dataset_id)
     preproc = get_dataset(dataset_id)
@@ -125,9 +127,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         'n_iter' : 10, 
         'batch_size' : int(.001 * X.shape[0])
         }
-    # n_iter = 10
-    # n_seed = 2
-    # batch_size = int(.01 * X.shape[0])
 
 
     start_size = args['batch_size']
@@ -437,7 +436,6 @@ def plot_results(dataset_id, n_iter, n_seed, show=False):
     # dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
     # for dataset_id in dataset_ids:
     for i, (metric_name, filename) in enumerate(metrics):
-            print('\n',metric_name, '\n')
         # try:
 
             # Plot new sampler results
