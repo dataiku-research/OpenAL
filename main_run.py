@@ -164,13 +164,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
             # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
-
-            # 'random-2': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-            # 'margin-2': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'confidence-2': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'entropy-2': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'kmeans-2': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-            # 'wkmeans-2': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
         }
 
         # Add new sampler method in the evaluated methods
