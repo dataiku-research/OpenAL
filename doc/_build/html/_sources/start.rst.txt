@@ -135,8 +135,16 @@ On the other hand, if you choosed to define your input parameters inside the ``m
 
 .. code-block:: bash
 
-    python main.py [dataset_id]
+    python main.py -datasets_ids [list of datasets ids you want to run]
 
+    # Example :
+    # python main.py -datasets_ids 1461 cifar10
+
+**Note:** If you want to run all the benchmark datasets in a row, you can leave datasets_ids argument empty
+
+.. code-block:: bash
+
+    python main.py -datasets_ids
 
 Save your results
 =================

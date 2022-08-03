@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Results" href="results.html" />
+    <link rel="next" title="Sampler with dynamic parameters" href="custom_sampler.html" />
     <link rel="prev" title="Welcome to Benchmark Active Learning’s documentation!" href="index.html" /> 
 </head>
 
@@ -52,7 +52,11 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Results</span></p>
+<p class="caption" role="heading"><span class="caption-text">How to define a sampler with dynamic instantiation parameters</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="custom_sampler.html">Sampler with dynamic parameters</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark results</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="results.html">Results</a></li>
 </ul>
@@ -191,7 +195,14 @@ Your can either add your custom sampler parameters and remove the dynamic input 
 <p>After you properly defined your custom sampler as shown below, there are 2 possible ways to run the benchmark, depending on the file in which you choosed to define your sampler input parameters.</p>
 <p>If you choosed to define your input parameters inside the <code class="docutils literal notranslate"><span class="pre">main.ipynb</span></code> file, you can run the benchmark running the notebook cells.</p>
 <p>On the other hand, if you choosed to define your input parameters inside the <code class="docutils literal notranslate"><span class="pre">main.py</span></code> file, you can run the benchmark typing the command below from your terminal (inside the root of the benchmark folder).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python main.py <span class="o">[</span>dataset_id<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python main.py -datasets_ids <span class="o">[</span>list of datasets ids you want to run<span class="o">]</span>
+
+<span class="c1"># Example :</span>
+<span class="c1"># python main.py -datasets_ids 1461 cifar10</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> If you want to run all the benchmark datasets in a row, you can leave datasets_ids argument empty</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python main.py -datasets_ids
 </pre></div>
 </div>
 </section>
@@ -208,7 +219,7 @@ Your can either add your custom sampler parameters and remove the dynamic input 
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Benchmark Active Learning’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="results.html" class="btn btn-neutral float-right" title="Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="custom_sampler.html" class="btn btn-neutral float-right" title="Sampler with dynamic parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
