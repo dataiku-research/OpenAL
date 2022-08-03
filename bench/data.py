@@ -96,7 +96,7 @@ class BetterTransformer(TransformerMixin):
                                         ('OneHotEncoder', OneHotEncoder(sparse=False, categories=[np.unique(full_X[:, i][~pd.isna(full_X[:, i])])]))
                                         ]) 
                                         #clone(self.category_transformer(categories=[np.unique(full_X[:, i])]))
-                    transformers.append(('cat_{}'.format(i), transformer, [i]))
+                transformers.append(('cat_{}'.format(i), transformer, [i]))
             elif type == DATE:
                 transformer = Pipeline([('convert_date', FunctionTransformer(transform_date_string_to_timestamp)),
                                         ('Imputer', SimpleImputer(strategy='median')),
