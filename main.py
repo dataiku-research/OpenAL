@@ -15,9 +15,9 @@ def get_my_sampler(params : dict) :
     # TODO : add your custom sampler parameters and remove the default ones if not useful
     sampler = MyCustomSamplerClass(
         # remove some of these parameters if not useful
-        batch_size = params['batch_size'],
-        classifier = params['clf'],
-        iteration = params['iteration'],    # AL iteration
+        params['batch_size'],
+        params['clf'],
+        params['iteration'],    # AL iteration
         random_state = params['seed'],      # Important for reproducibility purpose (Use it as much as possible)
         
         # add you custom parameters here

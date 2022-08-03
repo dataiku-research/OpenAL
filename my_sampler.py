@@ -3,6 +3,7 @@
 
 import numpy as np
 from cardinal.typeutils import RandomStateType
+from cardinal.uncertainty import margin_score
 
 
 
@@ -18,12 +19,13 @@ class MyCustomSamplerClass():
         strategy: Describes how to select the samples based on scores.
         random_state: Random seeding
     """
-    def __init__(self, batch_size: int, strategy: str = 'top',
-                random_state: RandomStateType = None):
+    def __init__(self, batch_size: int, classifier, iteration: int,
+                 strategy: str = 'top', random_state: RandomStateType = None):
         
-        # do some stuff
-
-        return
+        self.batch_size = batch_size
+        self.classifier = classifier
+        self.iteration = iteration
+        self.random_state = random_state
 
 
     def fit(self, X: np.ndarray, y: np.ndarray = None):
@@ -35,8 +37,8 @@ class MyCustomSamplerClass():
         Returns:
             The object itself
         """
-        
-        # do some stuff
+
+        # Nothing to do, the classifier is already fitted on the selected data!
 
         return self
 
@@ -50,8 +52,10 @@ class MyCustomSamplerClass():
             Indices of the selected samples of shape (batch_size).
         """
 
-        index = []
-        # do some stuff
+        selection_proba = margin_score(self.classifier, X) ** ((self.iteration + 1) * 2)
+        selection_proba /= selection_proba.sum()
+        np.random.seed(seed=self.random_state)
+        index = np.random.choice(X.shape[0], size=self.batch_size, replace=False, p=selection_proba)
 
         return index
 
