@@ -4,14 +4,19 @@ from pandas.errors import EmptyDataError
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
+import json
 
 
 class CsvValue:
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, base_path):
+        self.data_path = base_path + '.csv'
+        self.type_path = base_path + '.json'
         try:
-            self._data = pd.read_csv(self.path)
+            self._data = pd.read_csv(self.data_path)
+            with open(self.type_path, 'r') as f:
+                dtypes_dict = json.load(f)
+            self._data = self._data.astype(dtypes_dict)
             # Make all columns not called value as index
             self._data.set_index(self._data.columns.drop('value').to_list(), inplace=True)
         except (FileNotFoundError, EmptyDataError):
@@ -33,7 +38,12 @@ class CsvValue:
                 self._data.at[loc, 'value'] = value
             except KeyError:
                 self._data = self._data.append(pd.DataFrame([[value]], columns=['value'], index=[loc]))
-        self._data.to_csv(self.path)
+        self._data.to_csv(self.data_path)
+        dtypes_dict = self._data.dtypes.to_frame('dtypes').reset_index().astype(str).to_dict()
+
+        with open(self.type_path, 'w') as f:
+            json.dump(dtypes_dict, f)
+
 
     def get(self, index):
         if self._data is None:
@@ -53,7 +63,7 @@ class CsvDb:
         self.folder = Path(folder)
         self._values = dict()
         if not self.folder.exists():
-            self.folder.mkdir()
+            self.folder.mkdir(parents=True)
         else:
             for f in self.folder.iterdir():
                 if f.is_dir():
@@ -62,7 +72,7 @@ class CsvDb:
     
     def upsert(self, key, index, value):
         if not key in self._values:
-            self._values[key] = CsvValue(str(self.folder / (key + '.csv')))
+            self._values[key] = CsvValue(str(self.folder / key))
         self._values[key].upsert(index, value)
 
     def get(self, key, index):
