@@ -195,24 +195,26 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 method = methods[name]
 
-                # First, get at least one sample for each class
-                one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
-                # one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
-                splitter.add_batch(one_per_class)
+                # # First, get at least one sample for each class
+                # one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
+                # # one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
+                # splitter.add_batch(one_per_class)
     
-                if not k_start:
-                    first_index, _ = train_test_split(
-                        np.arange(X[splitter.non_selected].shape[0]),
-                        train_size=start_size - one_per_class.shape[0],
-                        random_state=int(seed),
-                        stratify=y[splitter.non_selected])
-                    # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+                # if not k_start:
+                #     first_index, _ = train_test_split(
+                #         np.arange(X[splitter.non_selected].shape[0]),
+                #         train_size=start_size - one_per_class.shape[0],
+                #         random_state=int(seed),
+                #         stratify=y[splitter.non_selected])
+                #     # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
 
-                else:
-                    start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
-                    start_sampler.fit(X[splitter.non_selected])
-                    first_index = start_sampler.select_samples(X[splitter.non_selected])
-                splitter.add_batch(first_index, partial=True)
+                # else:
+                #     start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
+                #     start_sampler.fit(X[splitter.non_selected])
+                #     first_index = start_sampler.select_samples(X[splitter.non_selected])
+                # splitter.add_batch(first_index, partial=True)
+
+                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y, random_state=int(seed))
 
                 classifier = get_clf(seed)
                 previous_predicted = None
