@@ -126,7 +126,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     args = {
         "n_seed" : 10, 
         'n_iter' : 10, 
-        'batch_size' : int(.001 * X.shape[0])
+        'batch_size' : int(.001 * X.shape[0])   # int(.005 * X.shape[0]) -> 5% labelized
         }
 
 
@@ -282,24 +282,24 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     # Exploration
 
-                    post_selected = splitter.selected_at(i + 1)
+                    pre_selected = splitter.selected_at(i)
 
                     distance_matrix = pairwise_distances(X[selected], X[splitter.test])
                     min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
-                    post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
+                    post_distance_matrix = pairwise_distances(X[pre_selected], X[splitter.test])
                     post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                     
                     db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
-                    db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
+                    # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
                     db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
 
                     # Batch Distance
-                    post_closest = post_distance_matrix.min(axis=1)
-                    closest = distance_matrix.min(axis=1)
+                    # post_closest = post_distance_matrix.min(axis=1)
+                    # closest = distance_matrix.min(axis=1)
                     
-                    db.upsert('post_closest', config, np.mean(post_closest))
-                    db.upsert('this_closest', config, np.mean(closest))
-                    db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
+                    # db.upsert('post_closest', config, np.mean(post_closest))
+                    # db.upsert('this_closest', config, np.mean(closest))
+                    # db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
 
 
                     # ================================================================================
@@ -307,20 +307,20 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # Trustscore 
                     # Metric skipped for dataset 43551 because of invalid shape error when calling trustscorer.score() (shape in axis 1: 0.)
 
-                    trustscorer = TrustScore()
-                    score = np.nan
-                    trustscorer.fit(X[selected], y[selected], classes=n_classes)
-                    max_k = np.unique(y[selected], return_counts=True)[1].min() - 1
-                    score = trustscorer.score(X[batch], predicted[batch], k=min(max_k, 10))[0].mean()
-                    db.upsert('batch_trustscore', config, score)
+                    # trustscorer = TrustScore()
+                    # score = np.nan
+                    # trustscorer.fit(X[selected], y[selected], classes=n_classes)
+                    # max_k = np.unique(y[selected], return_counts=True)[1].min() - 1
+                    # score = trustscorer.score(X[batch], predicted[batch], k=min(max_k, 10))[0].mean()
+                    # db.upsert('batch_trustscore', config, score)
 
-                    np.random.seed(int(seed))
-                    idx_sel = np.random.choice(splitter.test.sum())
+                    # np.random.seed(int(seed))
+                    # idx_sel = np.random.choice(splitter.test.sum())
 
-                    score = trustscorer.score(X[splitter.test], predicted[splitter.test], k=min(max_k, 10))[0].mean()
-                    db.upsert('test_trustscore', config, score)
-                    score = trustscorer.score(X[selected], predicted[selected], k=min(max_k, 10))[0].mean()
-                    db.upsert('self_trustscore', config, score)
+                    # score = trustscorer.score(X[splitter.test], predicted[splitter.test], k=min(max_k, 10))[0].mean()
+                    # db.upsert('test_trustscore', config, score)
+                    # score = trustscorer.score(X[selected], predicted[selected], k=min(max_k, 10))[0].mean()
+                    # db.upsert('self_trustscore', config, score)
 
                     # ================================================================================
 
@@ -341,6 +341,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         db.upsert('test_violation', config,  score)
                         db.upsert('self_violation', config, score)
                         db.upsert('batch_violation', config, score)
+
+                        # Save error 
+                        db.upsert('FAIL_violation', config,  score)
 
 
 
@@ -401,11 +404,13 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
     metrics = [
         ('Accuracy','accuracy_test.csv'),
+        ('Contradictions', 'contradiction_test.csv')
         ('Agreement','agreement_test.csv'),
-        ('Trustscore','test_trustscore.csv'),
+        # ('Trustscore','test_trustscore.csv'),
         ('Violation','test_violation.csv'),
-        ('Exploration','soft_exploration.csv'), #TODO is it the important file to plot ?
-        ('Closest','this_closest.csv')  #TODO is it the important file to plot ?
+        ('Hard Exploration','hard_exploration.csv'),
+        ('Top Exploration','top_exploration.csv'),
+        # ('Closest','this_closest.csv') 
     ]
 
     # dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
@@ -432,27 +437,26 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
             # Plot other samplers results from the benchmark
 
-            if save_folder != 'Experiments':
-                # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-                df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
-                method_names = np.unique(df["method"].values)
+            # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
+            # df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
+            # method_names = np.unique(df["method"].values)
 
-                for sampler_name in method_names:
-                    all_metric = []
-                    for seed in range(n_seed):
-                        metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                        all_metric.append(metric)
-                    
-                    plt.figure(i, figsize=(15,10))
-                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+            # for sampler_name in method_names:
+            #     all_metric = []
+            #     for seed in range(n_seed):
+            #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+            #         all_metric.append(metric)
+                
+            #     plt.figure(i, figsize=(15,10))
+            #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
 
-                plt.xlabel('AL iteration')
-                plt.ylabel(metric_name)
-                plt.title('{} metric'.format(metric_name))
-                plt.legend()
-                plt.tight_layout()
-                plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
+            # plt.xlabel('AL iteration')
+            # plt.ylabel(metric_name)
+            # plt.title('{} metric'.format(metric_name))
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
 
     if show:
         plt.show()
