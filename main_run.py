@@ -102,8 +102,9 @@ def run_benchmark(new_sampler_generator,
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
-    if not os.path.isdir(f'user_results/results_{dataset_id}/'): os.makedirs(f'user_results/results_{dataset_id}/')
-    db = CsvDb(f'user_results/results_{dataset_id}/db')
+    save_folder = 'Experiments' #'user_results'
+    if not os.path.isdir(f'{save_folder}/results_{dataset_id}/'): os.makedirs(f'{save_folder}/results_{dataset_id}/')
+    db = CsvDb(f'{save_folder}/results_{dataset_id}/db')
 
     # X, y, transformer, best_model = get_openml(dataset_id)
     preproc = get_dataset(dataset_id)
@@ -155,19 +156,19 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     for seed in range(args['n_seed']):
         print('Iteration {}'.format(seed))
         methods = {
-            # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-            # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-            # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+            'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+            'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+            'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
             # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
             # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
         }
 
         # Add new sampler method in the evaluated methods
-        methods[sampler_name] = new_sampler_generator
+        # methods[sampler_name] = new_sampler_generator
 
 
         for name_index, name in enumerate(methods):
@@ -185,26 +186,26 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             # Capture the output for logging
             with Tee() as tee:
 
-                # splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
-                test_indexes = load_indexes(dataset_id, seed, type='test')
-                mask = np.full(X.shape[0], -1, dtype=np.int8)
-                mask[test_indexes] = -2
-                splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
+                splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
+                # test_indexes = load_indexes(dataset_id, seed, type='test')
+                # mask = np.full(X.shape[0], -1, dtype=np.int8)
+                # mask[test_indexes] = -2
+                # splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
 
                 method = methods[name]
 
                 # First, get at least one sample for each class
-                # one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
-                one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
+                one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
+                # one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
                 splitter.add_batch(one_per_class)
     
                 if not k_start:
-                    # first_index, _ = train_test_split(
-                    #     np.arange(X[splitter.non_selected].shape[0]),
-                    #     train_size=start_size - one_per_class.shape[0],
-                    #     random_state=int(seed),
-                    #     stratify=y[splitter.non_selected])
-                    first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+                    first_index, _ = train_test_split(
+                        np.arange(X[splitter.non_selected].shape[0]),
+                        train_size=start_size - one_per_class.shape[0],
+                        random_state=int(seed),
+                        stratify=y[splitter.non_selected])
+                    # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
 
                 else:
                     start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
@@ -370,50 +371,31 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         "test" = 2
         """
 
-                    # try:
-                    #     df_to_save = pd.read_csv('user_results/results_{}/indexes.csv'.format(dataset_id)) 
-                    #     #First unique indexes
-                    #     df = pd.DataFrame([{'seed': int(seed), 'type': 0, 'index':index} for index in one_per_class])
-                    #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-                    # except:
-                    #     #First unique indexes
-                    #     df_to_save = pd.DataFrame([{'seed': seed, 'type': 0, 'index':index} for index in one_per_class])
-                
-                    # # Randomly selected samples
-                    # df = pd.DataFrame([{'seed': seed, 'type': 1, 'index':index} for index in first_index])
-                    # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-                    # # Test indexes
-                    # df = pd.DataFrame([{'seed': seed, 'type': 2, 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
-                    # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-                    
-                    # df_to_save.to_csv('user_results/results_{}/indexes.csv'.format(dataset_id), index=False)
-
-
-        # #TODO : use this only when runing initial benchmark (and not on client side) because it's very long
-        # # We define a column 'index_id__not_used' in order to define different csv indexes for save indexes with the save type (if we don't do so, Csv db saves only one index from each type)
-        # # One per class
-        # for index_id, index in enumerate(one_per_class):
-        #     dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
-        #     db.upsert('indexes', dic,  int(index))
-        # # Randomly selected samples
-        # for index_id, index in enumerate(first_index):
-        #     dic = dict(seed=int(seed), type=1, index_id__not_used=index_id)
-        #     db.upsert('indexes', dic,  int(index))
-        # # Test indexes
-        # for index_id, (index, is_in_test_set) in enumerate(enumerate(splitter.test)):
-        #     if is_in_test_set:
-        #         dic = dict(seed=int(seed), type=2, index_id__not_used=index_id)
-        #         db.upsert('indexes', dic,  int(index))
+        #TODO : use this only when runing initial benchmark (and not on client side) because it's very long
+        # We define a column 'index_id__not_used' in order to define different csv indexes for save indexes with the save type (if we don't do so, Csv db saves only one index from each type)
+        # One per class
+        for index_id, index in enumerate(one_per_class):
+            dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
+            db.upsert('indexes', dic,  int(index))
+        # Randomly selected samples
+        for index_id, index in enumerate(first_index):
+            dic = dict(seed=int(seed), type=1, index_id__not_used=index_id)
+            db.upsert('indexes', dic,  int(index))
+        # Test indexes
+        for index_id, (index, is_in_test_set) in enumerate(enumerate(splitter.test)):
+            if is_in_test_set:
+                dic = dict(seed=int(seed), type=2, index_id__not_used=index_id)
+                db.upsert('indexes', dic,  int(index))
 
 
     # Plots results from saved csv
     plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'])
 
     # Propose to merge current sampler results to benchmark resutls
-    share_results(dataset_id)
+    # share_results(dataset_id)
 
 
-def plot_results(dataset_id, n_iter, n_seed, show=False):
+def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
     x_data = np.arange(n_iter)
 
@@ -433,7 +415,7 @@ def plot_results(dataset_id, n_iter, n_seed, show=False):
 
             # Plot new sampler results
 
-            df = pd.read_csv(f'user_results/results_{dataset_id}/db/{filename}')
+            df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
             # sampler_name = np.unique(df["method"].values)[0]    #TODO
 
             #Loop in case their are several samplers tested here
@@ -450,34 +432,27 @@ def plot_results(dataset_id, n_iter, n_seed, show=False):
 
             # Plot other samplers results from the benchmark
 
-            # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-            df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
-            method_names = np.unique(df["method"].values)
+            if save_folder != 'Experiments':
+                # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
+                df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
+                method_names = np.unique(df["method"].values)
 
-            for sampler_name in method_names:
-                all_metric = []
-                for seed in range(n_seed):
-                    metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                    all_metric.append(metric)
-                
-                plt.figure(i, figsize=(15,10))
-                plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+                for sampler_name in method_names:
+                    all_metric = []
+                    for seed in range(n_seed):
+                        metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                        all_metric.append(metric)
+                    
+                    plt.figure(i, figsize=(15,10))
+                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
 
-            plt.xlabel('AL iteration')
-            plt.ylabel(metric_name)
-            plt.title('{} metric'.format(metric_name))
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig(f'user_results/results_{dataset_id}/plot-'+metric_name+'.png')
-            # plt.clf()
-
-            # We only show the accuracy to the user, other metrics are still saved
-            # if metric_name != 'Accuracy':
-            #     plt.clf()
-            
-        # except:
-        #     print("[ERROR] Problem occured when trying to plot {} metric values".format(metric_name))
+                plt.xlabel('AL iteration')
+                plt.ylabel(metric_name)
+                plt.title('{} metric'.format(metric_name))
+                plt.legend()
+                plt.tight_layout()
+                plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
 
     if show:
         plt.show()
