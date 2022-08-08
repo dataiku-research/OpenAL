@@ -157,11 +157,11 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         print('Iteration {}'.format(seed))
         methods = {
             'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-            'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-            'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+            # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+            # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+            # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
             # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
             # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
             # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
@@ -190,6 +190,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 # test_indexes = load_indexes(dataset_id, seed, type='test')
                 # mask = np.full(X.shape[0], -1, dtype=np.int8)
                 # mask[test_indexes] = -2
+                # TODO : revoir creation avec mask (wrt current_iter parameter )
                 # splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
 
                 method = methods[name]
@@ -219,6 +220,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 assert(splitter.selected.sum() == start_size)
                 assert(splitter.current_iter == 0)
+                print('0', splitter.selected_at(0).sum())
+                print(splitter.current_iter, splitter.selected.sum())
+                print()
 
                 for i in range(args['n_iter']):
 
@@ -282,8 +286,12 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # ================================================================================
 
                     # Exploration
+                    # print('0', sum(splitter.selected_at(0)))
+                    # print('1', sum(splitter.selected_at(1)))
+                    # print('2', sum(splitter.selected_at(2)))
+                    # print('3', sum(splitter.selected_at(3)))
 
-                    pre_selected = splitter.selected_at(i)
+                    pre_selected = splitter.selected_at(i+1)
 
                     distance_matrix = pairwise_distances(X[selected], X[splitter.test])
                     min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
@@ -415,7 +423,7 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
     metrics = [
         ('Accuracy','accuracy_test.csv'),
-        ('Contradictions', 'contradiction_test.csv')
+        ('Contradictions', 'contradiction_test.csv'),
         ('Agreement','agreement_test.csv'),
         # ('Trustscore','test_trustscore.csv'),
         ('Violation','test_violation.csv'),
