@@ -39,7 +39,7 @@ class CsvValue:
             except KeyError:
                 self._data = self._data.append(pd.DataFrame([[value]], columns=['value'], index=[loc]))
         self._data.to_csv(self.data_path)
-        dtypes_dict = self._data.dtypes.to_frame('dtypes').reset_index().astype(str).to_dict()
+        dtypes_dict = self._data.reset_index().dtypes.astype(str).to_dict()
 
         with open(self.type_path, 'w') as f:
             json.dump(dtypes_dict, f)
