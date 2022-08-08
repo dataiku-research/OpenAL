@@ -68,7 +68,7 @@ class CsvDb:
             for f in self.folder.iterdir():
                 if f.is_dir():
                     continue
-                self._values[f.stem] = CsvValue(str(f))
+                self._values[f.stem] = CsvValue(str(f.with_name(f.stem)))
     
     def upsert(self, key, index, value):
         if not key in self._values:
