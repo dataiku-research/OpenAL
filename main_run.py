@@ -214,7 +214,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 #     first_index = start_sampler.select_samples(X[splitter.non_selected])
                 # splitter.add_batch(first_index, partial=True)
 
-                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y, random_state=int(seed))
+                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))
 
                 classifier = get_clf(seed)
                 previous_predicted = None
