@@ -215,6 +215,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 classifier = get_clf(seed)
                 previous_predicted = None
+                previous_knn_predicted = None
 
                 assert(splitter.selected.sum() == start_size)
                 assert(splitter.current_iter == 0)
@@ -353,12 +354,22 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     knn = KNeighborsClassifier()
                     knn.fit(X[selected], y[selected])
-                    db.upsert('agreement_test', config,  np.mean(knn.predict(X[splitter.test]) == predicted_test))
-                    db.upsert('agreement_selected', config,  np.mean(knn.predict(X[selected]) == predicted_selected))
-                    db.upsert('agreement_batch', config,  np.mean(knn.predict(X[batch]) == predicted_batch))
+                    knn_predicted = knn.predict(X)
+                    db.upsert('agreement_test', config,  np.mean(knn_predicted[splitter.test] == predicted_test))
+                    db.upsert('agreement_selected', config,  np.mean(knn_predicted[selected] == predicted_selected))
+                    db.upsert('agreement_batch', config,  np.mean(knn_predicted[batch] == predicted_batch))
 
+                    # Contradictions agreement
+                    if previous_knn_predicted is not None:
+                        db.upsert('contradiction_knn_test', config, np.mean(previous_knn_predicted[splitter.test] != knn_predicted[splitter.test]))
+                        db.upsert('contradiction_knn_selected', config, np.mean(previous_knn_predicted[selected] != knn_predicted[selected]))
+                        db.upsert('contradiction_knn_batch', config, np.mean(previous_knn_predicted[batch] != knn_predicted[batch]))
 
+                    
                     # ================================================================================
+                    
+                    previous_predicted = predicted
+                    previous_knn_predicted = knn_predicted
 
             log_folder = Path('logs')
             log_folder.mkdir(exist_ok=True)
