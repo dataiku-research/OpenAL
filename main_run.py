@@ -121,7 +121,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     n_classes = len(np.unique(y))
 
-    k_start = False
+    # k_start = False
 
     args = {
         "n_seed" : 10, 
@@ -215,16 +215,14 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 # splitter.add_batch(first_index, partial=True)
 
                 splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))
+                first_index = splitter.selected
 
                 classifier = get_clf(seed)
                 previous_predicted = None
                 previous_knn_predicted = None
-
                 assert(splitter.selected.sum() == start_size)
+                assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
-                print('0', splitter.selected_at(0).sum())
-                print(splitter.current_iter, splitter.selected.sum())
-                print()
 
                 for i in range(args['n_iter']):
 
@@ -242,9 +240,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                                     
                     splitter.add_batch(new_selected_index)
 
-                    assert(splitter.current_iter == (i + 1))
-                    assert(splitter.selected_at(i + 1).sum() == ((i + 1) * args['batch_size']))
-                    assert(splitter.batch_at(i + 1).sum() == args['batch_size'])
+                    assert(splitter.current_iter == (i+1))
+                    assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size'])) #+1 for initialisation batch
+                    assert(splitter.batch_at(i).sum() == args['batch_size'])
 
                     config = dict(
                         seed=seed,
@@ -253,8 +251,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         dataset=dataset_id
                     )
 
-                    selected = splitter.selected_at(i + 1)
-                    batch = splitter.batch_at(i + 1)
+                    selected = splitter.selected_at(i)
+                    batch = splitter.batch_at(i)
+
 
                     # ================================================================================
 
@@ -288,29 +287,31 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # ================================================================================
 
                     # Exploration
-                    # print('0', sum(splitter.selected_at(0)))
-                    # print('1', sum(splitter.selected_at(1)))
-                    # print('2', sum(splitter.selected_at(2)))
-                    # print('3', sum(splitter.selected_at(3)))
 
-                    pre_selected = splitter.selected_at(i+1)
+                    if i>=1:
+                        print('0', sum(splitter.selected_at(0)))
+                        print('1', sum(splitter.selected_at(1)))
+                        print('2', sum(splitter.selected_at(2)))
+                        print('3', sum(splitter.selected_at(3)))
+                        pre_selected = splitter.selected_at(i-1)
 
-                    distance_matrix = pairwise_distances(X[selected], X[splitter.test])
-                    min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
-                    post_distance_matrix = pairwise_distances(X[pre_selected], X[splitter.test])
-                    post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
-                    
-                    db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
-                    # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
-                    db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
+                        distance_matrix = pairwise_distances(X[selected], X[splitter.test])
+                        min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
+                        post_distance_matrix = pairwise_distances(X[pre_selected], X[splitter.test])
+                        print(post_distance_matrix.shape, predicted_selected.shape)
+                        post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
+                        
+                        db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
+                        # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
+                        db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
 
-                    # Batch Distance
-                    # post_closest = post_distance_matrix.min(axis=1)
-                    # closest = distance_matrix.min(axis=1)
-                    
-                    # db.upsert('post_closest', config, np.mean(post_closest))
-                    # db.upsert('this_closest', config, np.mean(closest))
-                    # db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
+                        # Batch Distance
+                        # post_closest = post_distance_matrix.min(axis=1)
+                        # closest = distance_matrix.min(axis=1)
+                        
+                        # db.upsert('post_closest', config, np.mean(post_closest))
+                        # db.upsert('this_closest', config, np.mean(closest))
+                        # db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
 
 
                     # ================================================================================
@@ -398,9 +399,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         #TODO : use this only when runing initial benchmark (and not on client side) because it's very long
         # We define a column 'index_id__not_used' in order to define different csv indexes for save indexes with the save type (if we don't do so, Csv db saves only one index from each type)
         # One per class
-        for index_id, index in enumerate(one_per_class):
-            dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
-            db.upsert('indexes', dic,  int(index))
+        # for index_id, index in enumerate(one_per_class):
+        #     dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
+        #     db.upsert('indexes', dic,  int(index))
         # Randomly selected samples
         for index_id, index in enumerate(first_index):
             dic = dict(seed=int(seed), type=1, index_id__not_used=index_id)
@@ -488,9 +489,9 @@ def load_indexes(dataset_id, seed, type):
     Instead of only seeding the random initialisation, we use the indexes that have been saved during the previous benchmark run.
     Hence, all the samplers will have the same random initialisation samples
     """
-    if type == 'one_class':
-        type = 0
-    elif type == 'random':
+    # if type == 'one_class':
+    #     type = 0
+    if type == 'random':
         type = 1
     elif type == 'test':
         type = 2 
