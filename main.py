@@ -29,14 +29,14 @@ def get_my_sampler(params : dict) :
 # python main.py -datasets_ids 1461 1471 1502 1590 40922 41138 42395 43439 43551 42803 41162 cifar10 cifar10_simclr mnist
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-datasets_ids','--list', nargs='*', help='<Required> List of datasets to process', default=[], required=False)
+parser.add_argument('dataset_ids', type=str, nargs='*', help='List of datasets to process', default=[])
 args = parser.parse_args()
 
 # list of strings in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist']
 # Leave it empty in order to run all available datasets by default
-_, datasets_ids = parser.parse_args()._get_kwargs()[0]
+args = parser.parse_args()
+datasets_ids = args.dataset_ids
 del args
-
 
 sampler_name = 'my_custom_sampler' #TODO : change the name of your sampler if you want to
 

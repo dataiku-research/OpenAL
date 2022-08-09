@@ -220,6 +220,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 classifier = get_clf(seed)
                 previous_predicted = None
                 previous_knn_predicted = None
+                previous_min_dist_per_class = None
                 assert(splitter.selected.sum() == start_size)
                 assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
@@ -288,7 +289,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     # Exploration
 
-                    if i>=1:
+                    if previous_min_dist_per_class is not None:
                         print('0', sum(splitter.selected_at(0)))
                         print('1', sum(splitter.selected_at(1)))
                         print('2', sum(splitter.selected_at(2)))
@@ -297,13 +298,12 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                         distance_matrix = pairwise_distances(X[selected], X[splitter.test])
                         min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
-                        post_distance_matrix = pairwise_distances(X[pre_selected], X[splitter.test])
-                        print(post_distance_matrix.shape, predicted_selected.shape)
-                        post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                         
-                        db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(post_min_dist_per_class, axis=1)).item())
+                        db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(previous_min_dist_per_class, axis=1)).item())
                         # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
-                        db.upsert('top_exploration', config, np.mean(np.min(min_dist_per_class, axis=1) - np.min(post_min_dist_per_class, axis=1)).item())
+                        db.upsert('top_exploration', config, np.mean(np.min(previous_min_dist_per_class, axis=1) - np.min(min_dist_per_class, axis=1)).item())
+
+                        previous_min_dist_per_class = min_dist_per_class
 
                         # Batch Distance
                         # post_closest = post_distance_matrix.min(axis=1)
