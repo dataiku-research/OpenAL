@@ -42,6 +42,11 @@ import bench.prose.datainsights as di
 from matplotlib import pyplot as plt
 from cardinal.plotting import plot_confidence_interval
 
+
+# Setup matplotlib
+plt.rcParams['axes.facecolor'] = 'white'
+plt.rcParams['figure.facecolor'] = 'white'
+
 cwd = Path.cwd()
 
 class Tee(io.StringIO):
