@@ -20,7 +20,7 @@ from datetime import datetime
 from bench.csv_db import CsvDb
 from bench.data import get_openml, get_dataset
 
-from Experiments.share_results import share_results
+from experiments.share_results import share_results
 
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import MiniBatchKMeans
@@ -102,7 +102,7 @@ def run_benchmark(new_sampler_generator,
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
-    save_folder = 'Experiments' #'user_results'
+    save_folder = 'experiments'
     if not os.path.isdir(f'{save_folder}/results_{dataset_id}/'): os.makedirs(f'{save_folder}/results_{dataset_id}/')
     db = CsvDb(f'{save_folder}/results_{dataset_id}/db')
 
@@ -460,7 +460,7 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
             # Plot other samplers results from the benchmark
 
             # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-            # df = pd.read_csv(f'Experiments/results_{dataset_id}/db/{filename}')
+            # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
             # method_names = np.unique(df["method"].values)
 
             # for sampler_name in method_names:
@@ -498,7 +498,7 @@ def load_indexes(dataset_id, seed, type):
     else:
         exit(f'[ERROR] Can’t load indexes from type {type}')
 
-    df = pd.read_csv(f'Experiments/results_{dataset_id}/db/indexes.csv')
+    df = pd.read_csv(f'experiments/results_{dataset_id}/db/indexes.csv')
 
     # return df.loc[(df["seed"] == seed) & (df["type"]== type)]['value'].values   # TODO When column name will be updated
     return df.loc[(df["seed"] == seed) & (df["type"]== type)]['index'].values   
