@@ -42,6 +42,12 @@ import bench.prose.datainsights as di
 from matplotlib import pyplot as plt
 from cardinal.plotting import plot_confidence_interval
 
+import joblib
+import line_profiler
+profile = line_profiler.LineProfiler()
+
+# import time
+
 
 # Setup matplotlib
 plt.rcParams['axes.facecolor'] = 'white'
@@ -104,6 +110,7 @@ def run_benchmark(new_sampler_generator,
         run(dataset_id, new_sampler_generator, sampler_name)
 
 
+@profile
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
@@ -125,7 +132,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     fit_clf = lambda clf, X, y: clf.fit(X, y)
 
     n_classes = len(np.unique(y))
-
+    
     # k_start = False
 
     args = {
@@ -138,6 +145,24 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     start_size = args['batch_size']
     two_step_beta = 10
     # oracle_error = False
+
+
+    # model_cache = dict()
+
+    methods = {
+        'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+        # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
+    }
+
+    # Add new sampler method in the evaluated methods
+    # methods[sampler_name] = new_sampler_generator
 
 
     def get_min_dist_per_class(dist, labels):
@@ -154,27 +179,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         
         return min_dist_per_class
 
-
-    # model_cache = dict()
-
-
-    for seed in range(args['n_seed']):
+    def run_AL_experiment(seed):
         print('Iteration {}'.format(seed))
-        methods = {
-            'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-            # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-            # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-            # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
-            # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-            # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
-        }
-
-        # Add new sampler method in the evaluated methods
-        # methods[sampler_name] = new_sampler_generator
-
 
         for name_index, name in enumerate(methods):
             print(name)
@@ -220,7 +226,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 # splitter.add_batch(first_index, partial=True)
 
                 splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))
-                first_index = splitter.selected
+                first_index = np.where(splitter.selected == True)[0]
 
                 classifier = get_clf(seed)
                 previous_predicted = None
@@ -295,10 +301,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # Exploration
 
                     if previous_min_dist_per_class is not None:
-                        print('0', sum(splitter.selected_at(0)))
-                        print('1', sum(splitter.selected_at(1)))
-                        print('2', sum(splitter.selected_at(2)))
-                        print('3', sum(splitter.selected_at(3)))
                         pre_selected = splitter.selected_at(i-1)
 
                         distance_matrix = pairwise_distances(X[selected], X[splitter.test])
@@ -367,7 +369,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # ================================================================================
 
                     # Agreement
-
                     knn = KNeighborsClassifier()
                     knn.fit(X[selected], y[selected])
                     knn_predicted = knn.predict(X)
@@ -401,25 +402,30 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         "test" = 2
         """
 
-        #TODO : use this only when runing initial benchmark (and not on client side) because it's very long
-        # We define a column 'index_id__not_used' in order to define different csv indexes for save indexes with the save type (if we don't do so, Csv db saves only one index from each type)
-        # One per class
-        # for index_id, index in enumerate(one_per_class):
-        #     dic = dict(seed=int(seed), type=0, index_id__not_used=index_id)
-        #     db.upsert('indexes', dic,  int(index))
+
         # Randomly selected samples
-        for index_id, index in enumerate(first_index):
-            dic = dict(seed=int(seed), type=1, index_id__not_used=index_id)
-            db.upsert('indexes', dic,  int(index))
-        # Test indexes
-        for index_id, (index, is_in_test_set) in enumerate(enumerate(splitter.test)):
-            if is_in_test_set:
-                dic = dict(seed=int(seed), type=2, index_id__not_used=index_id)
-                db.upsert('indexes', dic,  int(index))
+        if save_folder == 'experiments':
+            try:
+                df_to_save = pd.read_csv(f'{save_folder}/results_{dataset_id}/indexes.csv') 
+                df = pd.DataFrame([{'seed': int(seed), 'type': 1, 'index':index} for index in first_index])
+                df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+            except:
+                df_to_save = pd.DataFrame([{'seed': seed, 'type': 1, 'index':index} for index in first_index])
+            # Test indexes
+            df = pd.DataFrame([{'seed': seed, 'type': 2, 'index':index} for index in np.where(splitter.test==True)[0]])
+            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
+            df_to_save.to_csv(f'{save_folder}/results_{dataset_id}/indexes.csv', index=False)
+
+    # start = time.time()
+    for seed in range(args['n_seed']):
+        run_AL_experiment(seed)
+    # joblib.Parallel(n_jobs=5, prefer='processes')(joblib.delayed(run_AL_experiment)(seed) for seed in range(args['n_seed']) )
+    # t_elapsed = time.time() - start
+    # print(t_elapsed)
 
 
     # Plots results from saved csv
-    plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'])
+    plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'], save_folder=save_folder)
 
     # Propose to merge current sampler results to benchmark resutls
     # share_results(dataset_id)
@@ -463,7 +469,7 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
             
 
             # Plot other samplers results from the benchmark
-
+            #TODO : uncomment for user use
             # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
             # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
             # method_names = np.unique(df["method"].values)
@@ -503,7 +509,7 @@ def load_indexes(dataset_id, seed, type):
     else:
         exit(f'[ERROR] Can’t load indexes from type {type}')
 
-    df = pd.read_csv(f'experiments/results_{dataset_id}/db/indexes.csv')
+    df = pd.read_csv(f'experiments/results_{dataset_id}/indexes.csv')
 
     # return df.loc[(df["seed"] == seed) & (df["type"]== type)]['value'].values   # TODO When column name will be updated
     return df.loc[(df["seed"] == seed) & (df["type"]== type)]['index'].values   
