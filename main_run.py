@@ -184,7 +184,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         print('Iteration {}'.format(seed))
 
         for name_index, name in enumerate(methods):
-            print(name)
+            # print(name)
+            iter_pbar = tqdm(np.arange(args['n_iter']), desc=f"\tProcessing {name}")
 
             # Check if it has been computer already
             config = dict(
@@ -237,7 +238,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
 
-                iter_pbar = tqdm(np.arange(args['n_iter']), desc=f"\tProcessing {name}")
                 for i in iter_pbar:
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
@@ -398,7 +398,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             log_folder.mkdir(exist_ok=True)
             with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
                 f.write(tee.read())
-
         
 
         #Saving indexes for reproducibility
