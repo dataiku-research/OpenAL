@@ -43,8 +43,9 @@ from matplotlib import pyplot as plt
 from cardinal.plotting import plot_confidence_interval
 
 import joblib
-import line_profiler
-profile = line_profiler.LineProfiler()
+from tqdm import tqdm
+# import line_profiler
+# profile = line_profiler.LineProfiler()
 
 # import time
 
@@ -110,7 +111,7 @@ def run_benchmark(new_sampler_generator,
         run(dataset_id, new_sampler_generator, sampler_name)
 
 
-@profile
+# @profile
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
@@ -236,7 +237,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
 
-                for i in range(args['n_iter']):
+                iter_pbar = tqdm(np.arange(args['n_iter']), desc=f"\tProcessing {name}")
+                for i in iter_pbar:
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
@@ -300,17 +302,20 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     # Exploration
 
-                    if previous_min_dist_per_class is not None:
-                        pre_selected = splitter.selected_at(i-1)
+                    distance_matrix = pairwise_distances(X[selected], X[splitter.test])
+                    min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
 
-                        distance_matrix = pairwise_distances(X[selected], X[splitter.test])
-                        min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
+                    if previous_min_dist_per_class is not None:
+                        # pre_selected = splitter.selected_at(i-1)
+                        # post_selected = splitter.selected_at(i+1)
+
+                        # post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
+                        # post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                         
                         db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(previous_min_dist_per_class, axis=1)).item())
                         # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
                         db.upsert('top_exploration', config, np.mean(np.min(previous_min_dist_per_class, axis=1) - np.min(min_dist_per_class, axis=1)).item())
 
-                        previous_min_dist_per_class = min_dist_per_class
 
                         # Batch Distance
                         # post_closest = post_distance_matrix.min(axis=1)
@@ -319,7 +324,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         # db.upsert('post_closest', config, np.mean(post_closest))
                         # db.upsert('this_closest', config, np.mean(closest))
                         # db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
-
+                    
+                    previous_min_dist_per_class = min_dist_per_class
 
                     # ================================================================================
 
@@ -355,7 +361,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         db.upsert('batch_violation', config, score)
 
                     else:
-                        print('Assertions learning failed')
+                        # print('Assertions learning failed')
                         score = 0
                         db.upsert('test_violation', config,  score)
                         db.upsert('self_violation', config, score)
@@ -392,6 +398,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             log_folder.mkdir(exist_ok=True)
             with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
                 f.write(tee.read())
+
         
 
         #Saving indexes for reproducibility
@@ -433,8 +440,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
 def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
-    x_data = np.arange(n_iter)
-
+    # x_data = np.arange(n_iter)
     metrics = [
         ('Accuracy','accuracy_test.csv'),
         ('Contradictions', 'contradiction_test.csv'),
@@ -446,50 +452,45 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
         # ('Closest','this_closest.csv') 
     ]
 
-    # dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
-    # for dataset_id in dataset_ids:
     for i, (metric_name, filename) in enumerate(metrics):
-        # try:
 
-            # Plot new sampler results
+        # Plot new sampler results
 
-            df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
-            # sampler_name = np.unique(df["method"].values)[0]    #TODO
-
-            #Loop in case their are several samplers tested here
-            method_names = np.unique(df["method"].values)
-            for sampler_name in method_names:
-                all_metric = []
-                for seed in range(n_seed):
-                    metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                    all_metric.append(metric)
-                    
-                plt.figure(i, figsize=(15,10))
-                plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
-            
-
-            # Plot other samplers results from the benchmark
-            #TODO : uncomment for user use
-            # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-            # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
-            # method_names = np.unique(df["method"].values)
-
-            # for sampler_name in method_names:
-            #     all_metric = []
-            #     for seed in range(n_seed):
-            #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-            #         all_metric.append(metric)
+        df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
+        method_names = np.unique(df["method"].values)
+        for sampler_name in method_names: #Loop in case their are several samplers tested here
+            all_metric = []
+            for seed in range(n_seed):
+                metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                all_metric.append(metric)
                 
-            #     plt.figure(i, figsize=(15,10))
-            #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+            plt.figure(i, figsize=(15,10))
+            x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
+            plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+        
+
+        # Plot other samplers results from the benchmark
+        #TODO : uncomment for user use
+        # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
+        # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
+        # method_names = np.unique(df["method"].values)
+
+        # for sampler_name in method_names:
+        #     all_metric = []
+        #     for seed in range(n_seed):
+        #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+        #         all_metric.append(metric)
+            
+        #     plt.figure(i, figsize=(15,10))
+        #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
 
-            # plt.xlabel('AL iteration')
-            # plt.ylabel(metric_name)
-            # plt.title('{} metric'.format(metric_name))
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
+        plt.xlabel('AL iteration')
+        plt.ylabel(metric_name)
+        plt.title('{} metric'.format(metric_name))
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
 
     if show:
         plt.show()
