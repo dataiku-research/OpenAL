@@ -121,10 +121,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     # X, y, transformer, best_model = get_openml(dataset_id)
     preproc = get_dataset(dataset_id)
     if len(preproc) == 3:
-        # DATA_TYPE = "image"
         X, y, best_model = preproc
     else:
-        # DATA_TYPE = "tabular"
         X, y, transformer, best_model = preproc
         X = transformer.fit_transform(X)
 
@@ -133,7 +131,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     n_classes = len(np.unique(y))
     
-    # k_start = False
 
     args = {
         "n_seed" : 10, 
@@ -141,22 +138,23 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         'batch_size' : int(.001 * X.shape[0])   # int(.005 * X.shape[0]) -> 5% labelized
         }
 
-
-    start_size = args['batch_size']
     two_step_beta = 10
+
+    # k_start = False
+    start_size = args['batch_size']
     # oracle_error = False
 
 
     # model_cache = dict()
 
     methods = {
-        'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=int(seed)),
+        # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
         # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
     }
@@ -197,42 +195,30 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             # Capture the output for logging
             with Tee() as tee:
 
+                # Train test split 
+
                 splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
                 # test_indexes = load_indexes(dataset_id, seed, type='test')
                 # mask = np.full(X.shape[0], -1, dtype=np.int8)
                 # mask[test_indexes] = -2
-                # TODO : revoir creation avec mask (wrt current_iter parameter )
+                # # TODO : revoir creation avec mask (wrt current_iter parameter )
                 # splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
 
+
+                #Initialisation
+
+                # splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
+                # first_index = np.where(splitter.selected == True)[0]
+                first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+                splitter.add_batch(first_index, partial=True)
+
+
                 method = methods[name]
-
-                # # First, get at least one sample for each class
-                # one_per_class = np.unique(y[splitter.non_selected], return_index=True)[1]
-                # # one_per_class = load_indexes(dataset_id, seed, type='one_class')    # [INFO] We select the same first samples indexes (from each class) that have been registered and used in the previous benchmark (instead of using seeds)
-                # splitter.add_batch(one_per_class)
-    
-                # if not k_start:
-                #     first_index, _ = train_test_split(
-                #         np.arange(X[splitter.non_selected].shape[0]),
-                #         train_size=start_size - one_per_class.shape[0],
-                #         random_state=int(seed),
-                #         stratify=y[splitter.non_selected])
-                #     # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
-
-                # else:
-                #     start_sampler = MiniBatchKMeansSampler(start_size - one_per_class.shape[0], random_state=int(seed))
-                #     start_sampler.fit(X[splitter.non_selected])
-                #     first_index = start_sampler.select_samples(X[splitter.non_selected])
-                # splitter.add_batch(first_index, partial=True)
-
-                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))
-                first_index = np.where(splitter.selected == True)[0]
-
                 classifier = get_clf(seed)
                 previous_predicted = None
                 previous_knn_predicted = None
                 previous_min_dist_per_class = None
-                assert(splitter.selected.sum() == start_size)
+                assert(splitter.selected.sum() == start_size), f"{splitter.selected.sum()}  {start_size}"
                 assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
 
@@ -301,10 +287,13 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     # Exploration
 
                     if previous_min_dist_per_class is not None:
-                        pre_selected = splitter.selected_at(i-1)
+                        # pre_selected = splitter.selected_at(i-1)
+                        # post_selected = splitter.selected_at(i+1)
 
                         distance_matrix = pairwise_distances(X[selected], X[splitter.test])
                         min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
+                        # post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
+                        # post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                         
                         db.upsert('hard_exploration', config, np.mean(np.argmin(min_dist_per_class, axis=1) == np.argmin(previous_min_dist_per_class, axis=1)).item())
                         # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
