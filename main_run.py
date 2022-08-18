@@ -25,7 +25,7 @@ from experiments.share_results import share_results
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, pairwise_distances
+from sklearn.metrics import accuracy_score, pairwise_distances, f1_score
 from sklearn.neighbors import KNeighborsClassifier
 
 from cardinal.uncertainty import MarginSampler, ConfidenceSampler, EntropySampler, margin_score, confidence_score, entropy_score, _get_probability_classes
@@ -34,7 +34,7 @@ from cardinal.clustering import KCentroidSampler, MiniBatchKMeansSampler, KCente
 from cardinal.utils import ActiveLearningSplitter
 
 
-from bench.samplers import TwoStepIncrementalMiniBatchKMeansSampler, TwoStepMiniBatchKMeansSampler
+from bench.samplers import TwoStepIncrementalMiniBatchKMeansSampler, TwoStepMiniBatchKMeansSampler, AutoEmbedder, BatchBALDSampler 
 from bench.trustscore import TrustScore
 import bench.prose.datainsights as di
 
@@ -43,8 +43,9 @@ from matplotlib import pyplot as plt
 from cardinal.plotting import plot_confidence_interval
 
 import joblib
-import line_profiler
-profile = line_profiler.LineProfiler()
+from tqdm import tqdm
+# import line_profiler
+# profile = line_profiler.LineProfiler()
 
 # import time
 
@@ -110,7 +111,7 @@ def run_benchmark(new_sampler_generator,
         run(dataset_id, new_sampler_generator, sampler_name)
 
 
-@profile
+# @profile
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
@@ -130,7 +131,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     fit_clf = lambda clf, X, y: clf.fit(X, y)
 
     n_classes = len(np.unique(y))
-    
+
 
     args = {
         "n_seed" : 10, 
@@ -154,8 +155,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
         # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
         # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
     }
 
@@ -181,7 +182,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         print('Iteration {}'.format(seed))
 
         for name_index, name in enumerate(methods):
-            print(name)
+            # print(name)
+            iter_pbar = tqdm(np.arange(args['n_iter']), desc=f"\tProcessing {name}")
 
             # Check if it has been computer already
             config = dict(
@@ -207,10 +209,10 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 #Initialisation
 
-                # splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
-                # first_index = np.where(splitter.selected == True)[0]
-                first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
-                splitter.add_batch(first_index, partial=True)
+                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
+                first_index = np.where(splitter.selected == True)[0]
+                # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+                # splitter.add_batch(first_index, partial=True)
 
 
                 method = methods[name]
@@ -222,7 +224,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 assert(splitter.selected_at(0).sum() == start_size)
                 assert(splitter.current_iter == 0)
 
-                for i in range(args['n_iter']):
+                for i in iter_pbar:
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
@@ -255,6 +257,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     # ================================================================================
 
+                    # Performance
+
                     # Accuracy
 
                     predicted_proba_test = predicted[splitter.test] 
@@ -268,6 +272,24 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     db.upsert('accuracy_test', config, accuracy_score(y[splitter.test], predicted_test))
                     db.upsert('accuracy_selected', config, accuracy_score(y[selected], predicted_selected))
                     db.upsert('accuracy_batch', config, accuracy_score(y[batch], predicted_batch))
+
+                    # Precision / Recall / F1 score
+
+                    uniques, counts = np.unique(y, return_counts=True)
+                    if n_classes == 2:
+                        labels = None
+                        pos_label = uniques[np.argmin(counts)]
+                        average = 'binary'
+                    elif n_classes >= 2:
+                        labels = []
+                        sum = np.sum(counts)
+                        for label_id in uniques:
+                            if (counts[label_id] / sum) <= (0.2 / n_classes):   # if class ratio is under 10% in bi-class      #TODO : define threshold
+                                labels.append(label_id)
+                        average = 'micro'
+                    db.upsert('f_score_test', config, f1_score(y[splitter.test], predicted_test, labels=labels, pos_label=pos_label, average=average))
+                    db.upsert('f_score_selected', config, f1_score(y[selected], predicted_selected, labels=labels, pos_label=pos_label, average=average))
+                    db.upsert('f_score_batch', config, f1_score(y[batch], predicted_batch, labels=labels, pos_label=pos_label, average=average))
 
                     # ================================================================================
 
@@ -286,12 +308,13 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                     # Exploration
 
+                    distance_matrix = pairwise_distances(X[selected], X[splitter.test])
+                    min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
+
                     if previous_min_dist_per_class is not None:
                         # pre_selected = splitter.selected_at(i-1)
                         # post_selected = splitter.selected_at(i+1)
 
-                        distance_matrix = pairwise_distances(X[selected], X[splitter.test])
-                        min_dist_per_class = get_min_dist_per_class(distance_matrix, predicted_selected)
                         # post_distance_matrix = pairwise_distances(X[post_selected], X[splitter.test])
                         # post_min_dist_per_class = get_min_dist_per_class(post_distance_matrix, predicted_selected)
                         
@@ -299,7 +322,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         # db.upsert('soft_exploration', config, np.mean(np.abs(min_dist_per_class - post_min_dist_per_class)).item())
                         db.upsert('top_exploration', config, np.mean(np.min(previous_min_dist_per_class, axis=1) - np.min(min_dist_per_class, axis=1)).item())
 
-                        previous_min_dist_per_class = min_dist_per_class
 
                         # Batch Distance
                         # post_closest = post_distance_matrix.min(axis=1)
@@ -308,7 +330,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         # db.upsert('post_closest', config, np.mean(post_closest))
                         # db.upsert('this_closest', config, np.mean(closest))
                         # db.upsert('diff_closest', config, np.mean(closest) - np.mean(post_closest))
-
+                    
+                    previous_min_dist_per_class = min_dist_per_class
 
                     # ================================================================================
 
@@ -344,7 +367,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         db.upsert('batch_violation', config, score)
 
                     else:
-                        print('Assertions learning failed')
+                        # print('Assertions learning failed')
                         score = 0
                         db.upsert('test_violation', config,  score)
                         db.upsert('self_violation', config, score)
@@ -422,8 +445,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
 def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
-    x_data = np.arange(n_iter)
-
+    # x_data = np.arange(n_iter)
     metrics = [
         ('Accuracy','accuracy_test.csv'),
         ('Contradictions', 'contradiction_test.csv'),
@@ -435,50 +457,45 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
         # ('Closest','this_closest.csv') 
     ]
 
-    # dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
-    # for dataset_id in dataset_ids:
     for i, (metric_name, filename) in enumerate(metrics):
-        # try:
 
-            # Plot new sampler results
+        # Plot new sampler results
 
-            df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
-            # sampler_name = np.unique(df["method"].values)[0]    #TODO
-
-            #Loop in case their are several samplers tested here
-            method_names = np.unique(df["method"].values)
-            for sampler_name in method_names:
-                all_metric = []
-                for seed in range(n_seed):
-                    metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                    all_metric.append(metric)
-                    
-                plt.figure(i, figsize=(15,10))
-                plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
-            
-
-            # Plot other samplers results from the benchmark
-            #TODO : uncomment for user use
-            # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-            # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
-            # method_names = np.unique(df["method"].values)
-
-            # for sampler_name in method_names:
-            #     all_metric = []
-            #     for seed in range(n_seed):
-            #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-            #         all_metric.append(metric)
+        df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
+        method_names = np.unique(df["method"].values)
+        for sampler_name in method_names: #Loop in case their are several samplers tested here
+            all_metric = []
+            for seed in range(n_seed):
+                metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                all_metric.append(metric)
                 
-            #     plt.figure(i, figsize=(15,10))
-            #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+            plt.figure(i, figsize=(15,10))
+            x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
+            plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+        
+
+        # Plot other samplers results from the benchmark
+        #TODO : uncomment for user use
+        # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
+        # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
+        # method_names = np.unique(df["method"].values)
+
+        # for sampler_name in method_names:
+        #     all_metric = []
+        #     for seed in range(n_seed):
+        #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+        #         all_metric.append(metric)
+            
+        #     plt.figure(i, figsize=(15,10))
+        #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
 
-            # plt.xlabel('AL iteration')
-            # plt.ylabel(metric_name)
-            # plt.title('{} metric'.format(metric_name))
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
+        plt.xlabel('AL iteration')
+        plt.ylabel(metric_name)
+        plt.title('{} metric'.format(metric_name))
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
 
     if show:
         plt.show()
