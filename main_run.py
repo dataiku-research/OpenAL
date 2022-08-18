@@ -214,6 +214,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
                 # splitter.add_batch(first_index, partial=True)
 
+                assert(np.unique(y[first_index]).shape[0] == np.unique(y).shape[0]), f'{np.unique(y[first_index]).shape[0]} != {np.unique(y).shape[0]}'
+
 
                 method = methods[name]
                 classifier = get_clf(seed)
@@ -499,6 +501,8 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
     if show:
         plt.show()
+
+    for i in range(len(metrics)): plt.figure(i).clear()    
 
 
 def load_indexes(dataset_id, seed, type):

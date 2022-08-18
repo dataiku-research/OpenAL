@@ -9,7 +9,7 @@ PLOT_TYPE =  "results"  #   "results", "variance", "correlations"
 
 
 n_iter = 10
-x_data = np.arange(n_iter)
+n_seed=10
 metrics = [
     ('Accuracy','accuracy_test.csv'),
     ('Agreement','agreement_test.csv'),
@@ -18,26 +18,32 @@ metrics = [
     ('Exploration','soft_exploration.csv'), #TODO important file to plot
     ('Closest','this_closest.csv')  #TODO important file to plot
 ]
+save_folder = 'experiments'
+
 
 # PLOT RESULTS
-if PLOT_TYPE == "results":
-    # dataset_id = 43551
-    dataset_ids = [1461]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
+if PLOT_TYPE =='results':
+    dataset_ids = [1461, 1502, 40922]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
     for dataset_id in dataset_ids:
         for i, (metric_name, filename) in enumerate(metrics):
-            try:
-                df = pd.read_csv('results_{}/'.format(dataset_id)+filename)
-                method_names = np.unique(df["method"].values)
+            # try:
 
+                # Plot new sampler results
+
+                df = pd.read_csv(f'results_{dataset_id}/db/{filename}')
+                # sampler_name = np.unique(df["method"].values)[0]    #TODO
+
+                #Loop in case their are several samplers tested here
+                method_names = np.unique(df["method"].values)
                 for sampler_name in method_names:
-                    # if sampler_name in ['entropy', 'margin']:
-                        all_metric = []
-                        for seed in range(10):
-                            metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                            all_metric.append(metric)
+                    all_metric = []
+                    for seed in range(n_seed):
+                        metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                        all_metric.append(metric)
                         
-                        plt.figure(i, figsize=(15,10))
-                        plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+                    plt.figure(i, figsize=(15,10))
+                    x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
+                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
 
                 plt.xlabel('AL iteration')
                 plt.ylabel(metric_name)
@@ -45,12 +51,12 @@ if PLOT_TYPE == "results":
                 plt.legend()
                 plt.tight_layout()
                 plt.savefig(f'results_{dataset_id}/plot-'+metric_name+'.png')
-                plt.clf()
-                
-            except:
-                print("[ERROR] Problem occured when trying to plot {} metric values".format(metric_name))
 
-        plt.show()
+        plt.show()    
+        for i in range(len(metrics)): plt.figure(i).clear()        
+
+
+
 
 
 
