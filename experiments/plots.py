@@ -60,7 +60,9 @@ if PLOT_TYPE =='results':
                 plt.legend()
                 plt.tight_layout()
                 plt.savefig(f'results_{dataset_id}/plot-'+metric_name+'.png')
-        plt.show()        
+
+        plt.show()    
+        for i in range(len(metrics)): plt.figure(i).clear()        
 
 
 

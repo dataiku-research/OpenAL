@@ -229,6 +229,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))
                 first_index = np.where(splitter.selected == True)[0]
+                assert(np.unique(y[first_index]).shape[0] == np.unique(y).shape[0]), f'{np.unique(y[first_index]).shape[0]} != {np.unique(y).shape[0]}'
+
 
                 classifier = get_clf(seed)
                 previous_predicted = None
@@ -493,6 +495,8 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
     if show:
         plt.show()
+
+    for i in range(len(metrics)): plt.figure(i).clear()    
 
 
 def load_indexes(dataset_id, seed, type):
