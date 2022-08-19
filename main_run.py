@@ -162,7 +162,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     # Add new sampler method in the evaluated methods
     # methods[sampler_name] = new_sampler_generator
-
+    assert len(methods.keys()) >0, "There are no sampling strategies to evaluate"
 
     def get_min_dist_per_class(dist, labels):
         assert(dist.shape[0] == labels.shape[0])
