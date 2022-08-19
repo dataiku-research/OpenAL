@@ -11,13 +11,17 @@ PLOT_TYPE =  "results"  #   "results", "variance", "correlations"
 n_iter = 10
 n_seed=10
 metrics = [
-    ('Accuracy','accuracy_test.csv'),
-    ('Agreement','agreement_test.csv'),
-    ('Trustscore','test_trustscore.csv'),
-    ('Violation','test_violation.csv'),
-    ('Exploration','soft_exploration.csv'), #TODO important file to plot
-    ('Closest','this_closest.csv')  #TODO important file to plot
-]
+        ('Accuracy','accuracy_test.csv'),
+        ('F-Score','f_score_test.csv'),
+        ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
+        ('Contradictions', 'contradiction_test.csv'),
+        ('Agreement','agreement_test.csv'),
+        # ('Trustscore','test_trustscore.csv'),
+        ('Violation','test_violation.csv'),
+        ('Hard-Exploration','hard_exploration.csv'),
+        ('Top-Exploration','top_exploration.csv'),
+        # ('Closest','this_closest.csv') 
+    ]
 save_folder = 'experiments'
 
 

@@ -25,7 +25,7 @@ from experiments.share_results import share_results
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, pairwise_distances, f1_score
+from sklearn.metrics import accuracy_score, pairwise_distances, f1_score, roc_auc_score
 from sklearn.neighbors import KNeighborsClassifier
 
 from cardinal.uncertainty import MarginSampler, ConfidenceSampler, EntropySampler, margin_score, confidence_score, entropy_score, _get_probability_classes
@@ -275,23 +275,31 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     db.upsert('accuracy_selected', config, accuracy_score(y[selected], predicted_selected))
                     db.upsert('accuracy_batch', config, accuracy_score(y[batch], predicted_batch))
 
-                    # Precision / Recall / F1 score
 
                     uniques, counts = np.unique(y, return_counts=True)
                     if n_classes == 2:
-                        labels = None
                         pos_label = uniques[np.argmin(counts)]
-                        average = 'binary'
+                        labels = [pos_label]
+                        average_f_score = 'binary'
                     elif n_classes >= 2:
                         labels = []
                         sum = np.sum(counts)
                         for label_id in uniques:
                             if (counts[label_id] / sum) <= (0.2 / n_classes):   # if class ratio is under 10% in bi-class      #TODO : define threshold
                                 labels.append(label_id)
-                        average = 'micro'
-                    db.upsert('f_score_test', config, f1_score(y[splitter.test], predicted_test, labels=labels, pos_label=pos_label, average=average))
-                    db.upsert('f_score_selected', config, f1_score(y[selected], predicted_selected, labels=labels, pos_label=pos_label, average=average))
-                    db.upsert('f_score_batch', config, f1_score(y[batch], predicted_batch, labels=labels, pos_label=pos_label, average=average))
+                        average_f_score = 'micro'
+
+                    # Precision / Recall / F1 score
+
+                    db.upsert('f_score_test', config, f1_score(y[splitter.test], predicted_test, labels=labels, pos_label=pos_label, average=average_f_score))
+                    db.upsert('f_score_selected', config, f1_score(y[selected], predicted_selected, labels=labels, pos_label=pos_label, average=average_f_score))
+                    db.upsert('f_score_batch', config, f1_score(y[batch], predicted_batch, labels=labels, pos_label=pos_label, average=average_f_score))
+
+
+                    # ROC AUC score
+                    db.upsert('ROC_AUC_score_test', config, roc_auc_score(y[splitter.test], predicted_test, labels=labels, average='micro', multi_class='ovr'))
+                    db.upsert('ROC_AUC_score_selected', config, roc_auc_score(y[selected], predicted_selected, labels=labels, average='micro', multi_class='ovr'))
+                    db.upsert('ROC_AUC_score_batch', config, roc_auc_score(y[batch], predicted_batch, labels=labels, average='micro', multi_class='ovr'))
 
                     # ================================================================================
 
@@ -450,12 +458,14 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
     # x_data = np.arange(n_iter)
     metrics = [
         ('Accuracy','accuracy_test.csv'),
+        ('F-Score','f_score_test.csv'),
+        ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
         ('Contradictions', 'contradiction_test.csv'),
         ('Agreement','agreement_test.csv'),
         # ('Trustscore','test_trustscore.csv'),
         ('Violation','test_violation.csv'),
-        ('Hard Exploration','hard_exploration.csv'),
-        ('Top Exploration','top_exploration.csv'),
+        ('Hard-Exploration','hard_exploration.csv'),
+        ('Top-Exploration','top_exploration.csv'),
         # ('Closest','this_closest.csv') 
     ]
 
