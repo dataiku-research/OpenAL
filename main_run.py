@@ -46,7 +46,7 @@ import joblib
 from tqdm import tqdm
 # import line_profiler
 # profile = line_profiler.LineProfiler()
-
+import pickle
 # import time
 
 
@@ -131,12 +131,14 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     fit_clf = lambda clf, X, y: clf.fit(X, y)
 
     n_classes = len(np.unique(y))
-
+    batch_size = int(.005 * X.shape[0]) if dataset_id=='1471' else int(.001 * X.shape[0])
 
     args = {
+        "dataset" : dataset_id,
         "n_seed" : 10, 
         'n_iter' : 10, 
-        'batch_size' : int(.001 * X.shape[0])   # int(.005 * X.shape[0]) -> 5% labelized
+        'batch_size' : batch_size,     #0.01% of #1471 represents 8 samples -> far too small for an AL experiment      #Explaination : #1471 is very small with a lot of features -> need more samples to learn
+        'batch_size_ratio' : int((batch_size / len(X)) *100)
         }
 
     two_step_beta = 10
@@ -149,15 +151,15 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     # model_cache = dict()
 
     methods = {
-        # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
         # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
-        # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=X[splitter.train]), batch_size=params['batch_size']),
+        'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
     }
 
     # Add new sampler method in the evaluated methods
@@ -231,7 +233,10 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
             
-                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i)  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
+                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i, train_dataset=X[splitter.train])  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
+                    """
+                    train_dataset : labelised + unlabelised samples (all non test samples)
+                    """
                     # X_test = X[splitter.test]
                     # params['X_test'] = X_test
 
@@ -445,6 +450,10 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     # t_elapsed = time.time() - start
     # print(t_elapsed)
 
+    # Save run args in a txt file
+    with open(f'{save_folder}/results_{dataset_id}' + 'arguments.txt', 'wb') as f:
+        pickle.dump(args, f)
+    f.close()
 
     # Plots results from saved csv
     plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'], save_folder=save_folder)
