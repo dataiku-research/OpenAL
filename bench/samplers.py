@@ -29,11 +29,10 @@ class TwoStepIncrementalMiniBatchKMeansSampler(TwoStepKMeansSampler):
             IncrementalMiniBatchKMeansSampler(batch_size, **kmeans_args)
         ]
 
-    def select_samples(self, X: np.array,
-                       fixed_cluster_centers=None) -> np.array:
+    def select_samples(self, X: np.array) -> np.array:
         selected = self.sampler_list[0].select_samples(X)
         new_selected = self.sampler_list[1].select_samples(
-            X[selected], sample_weight=self.sampler_list[0].sample_scores_[selected], fixed_cluster_centers=fixed_cluster_centers)
+            X[selected], sample_weight=self.sampler_list[0].sample_scores_[selected])
         selected = selected[new_selected]
         
         return selected
