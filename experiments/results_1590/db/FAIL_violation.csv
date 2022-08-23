@@ -1,0 +1,8 @@
+seed,method,n_iter,dataset,value
+0,random,0,1590,0.0
+0,margin,0,1590,0.0
+0,confidence,0,1590,0.0
+0,entropy,0,1590,0.0
+0,kmeans,0,1590,0.0
+0,wkmeans,0,1590,0.0
+0,iwkmeans,0,1590,0.0

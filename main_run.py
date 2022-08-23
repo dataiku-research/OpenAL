@@ -288,11 +288,16 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         average_f_score = 'binary'
                     elif n_classes >= 2:
                         labels = []
+                        pos_label = None
                         sum = np.sum(counts)
                         for label_id in uniques:
                             if (counts[label_id] / sum) <= (0.2 / n_classes):   # if class ratio is under 10% in bi-class      #TODO : define threshold
                                 labels.append(label_id)
                         average_f_score = 'micro'
+                    
+                    assert y[splitter.test].shape == predicted_test.shape, f'{y[splitter.test].shape} , {predicted_test.shape}'
+                    assert y[selected].shape == predicted_selected.shape
+                    assert y[batch].shape == predicted_batch.shape
 
                     # Precision / Recall / F1 score
 
@@ -302,9 +307,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
 
                     # ROC AUC score
-                    db.upsert('ROC_AUC_score_test', config, roc_auc_score(y[splitter.test], predicted_test, labels=labels, average='micro', multi_class='ovr'))
-                    db.upsert('ROC_AUC_score_selected', config, roc_auc_score(y[selected], predicted_selected, labels=labels, average='micro', multi_class='ovr'))
-                    # db.upsert('ROC_AUC_score_batch', config, roc_auc_score(y[batch], predicted_batch, labels=labels, average='micro', multi_class='ovr'))
+                    # db.upsert('ROC_AUC_score_test', config, roc_auc_score(y[splitter.test], predicted_test, labels=labels, average='micro', multi_class='ovr'))
+                    # db.upsert('ROC_AUC_score_selected', config, roc_auc_score(y[selected], predicted_selected, labels=labels, average='micro', multi_class='ovr'))
+                    # # db.upsert('ROC_AUC_score_batch', config, roc_auc_score(y[batch], predicted_batch, labels=labels, average='micro', multi_class='ovr'))
 
                     # ================================================================================
 
@@ -451,7 +456,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     # print(t_elapsed)
 
     # Save run args in a txt file
-    with open(f'{save_folder}/results_{dataset_id}' + 'arguments.txt', 'wb') as f:
+    with open(f'{save_folder}/results_{dataset_id}' + 'arguments.txt', 'w') as f:
         pickle.dump(args, f)
     f.close()
 
