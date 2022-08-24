@@ -12,7 +12,7 @@ from sklearn.metrics import confusion_matrix
 from cardinal.typeutils import RandomStateType, check_random_state
 from tensorflow.keras.models import Sequential, Model
 from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from scipy.sparse import coo_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import OneHotEncoder
@@ -876,19 +876,26 @@ def _forward_pass_partial(model, X, n_layers):
 
 class AutoEmbedder:
 
-    ALLOWED = (MLPClassifier, Sequential, RandomForestClassifier)
+    ALLOWED = (MLPClassifier, Sequential, RandomForestClassifier, GradientBoostingClassifier)
 
     def __init__(self, model, **kwargs):
 
         if not isinstance(model, self.ALLOWED):
             raise TypeError('Expecting a model among ' + str(self.ALLOWED))
 
-        if isinstance(model, RandomForestClassifier):
+        if isinstance(model, RandomForestClassifier) or isinstance(model, GradientBoostingClassifier):
             if not 'X' in kwargs:
                 raise ValueError('You must provide a calibration dataset for RF')
-            n_leaves = [0] + [i.get_n_leaves() for i in model.estimators_]
+            if isinstance(model, RandomForestClassifier):
+                estimators = model.estimators_
+            elif isinstance(model, GradientBoostingClassifier):
+                estimators = model.estimators_.reshape(-1)
+                
+            n_leaves = [0] + [i.get_n_leaves() for i in estimators]
+            X = kwargs['X']
+
             self.shifts = np.cumsum(n_leaves)
-            data = model.apply(kwargs['X'])
+            data = model.apply(X).reshape([X.shape[0], -1])
             self.ohe = OneHotEncoder().fit(data)
             self.pca = TruncatedSVD(n_components=int(np.log(data.shape[1]) / (0.25 ** 2)))
             self.pca.fit(self.ohe.transform(data))
@@ -903,10 +910,10 @@ class AutoEmbedder:
                       outputs=self.model.get_layer(index=len(self.model.layers) -1).output)
             m.compile()
             return m.predict(X)
-        elif isinstance(self.model, RandomForestClassifier):
-            return self.pca.transform(self.ohe.transform(self.model.apply(X)))
+        elif isinstance(self.model, RandomForestClassifier) or isinstance(self.model, GradientBoostingClassifier):
+            return self.pca.transform(self.ohe.transform(self.model.apply(X).reshape((X.shape[0], -1))))
         else:
-            raise ValueError('An unexpected error has occured')
+            raise ValueError('Model is not supported')
             
 
 class TrustSampler(ScoredQuerySampler):
