@@ -1,6 +1,7 @@
 from functools import partial
 import os
 import string
+import json
 import sys
 from sys import exit
 
@@ -135,10 +136,10 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     args = {
         "dataset" : dataset_id,
-        "n_seed" : 10, 
-        'n_iter' : 10, 
+        "n_seed" : 1, 
+        'n_iter' : 2, 
         'batch_size' : batch_size,     #0.01% of #1471 represents 8 samples -> far too small for an AL experiment      #Explaination : #1471 is very small with a lot of features -> need more samples to learn
-        'batch_size_ratio' : int((batch_size / len(X)) *100)
+        'batch_size_ratio' : (batch_size / len(X)) *100
         }
 
     two_step_beta = 10
@@ -152,14 +153,14 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     methods = {
         'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
-        'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
+        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
+        # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
     }
 
     # Add new sampler method in the evaluated methods
@@ -448,6 +449,10 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             df_to_save = pd.concat([df_to_save, df], ignore_index=True)
             df_to_save.to_csv(f'{save_folder}/results_{dataset_id}/indexes.csv', index=False)
 
+        # End run_AL_experiment
+
+
+
     # start = time.time()
     for seed in range(args['n_seed']):
         run_AL_experiment(seed)
@@ -456,8 +461,11 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     # print(t_elapsed)
 
     # Save run args in a txt file
-    with open(f'{save_folder}/results_{dataset_id}' + 'arguments.txt', 'w') as f:
-        pickle.dump(args, f)
+    with open(f'{save_folder}/results_{dataset_id}/' + 'arguments.txt', 'w') as f:
+        f.write("----- Experiments parameters ----- \n\n")
+        for key in args.keys():
+            f.write(f'\t{key} :\t{args[key]}\n')
+        # pickle.dump(args, f)
     f.close()
 
     # Plots results from saved csv
@@ -473,7 +481,7 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
     metrics = [
         ('Accuracy','accuracy_test.csv'),
         ('F-Score','f_score_test.csv'),
-        ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
+        # ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
         ('Contradictions', 'contradiction_test.csv'),
         ('Agreement','agreement_test.csv'),
         # ('Trustscore','test_trustscore.csv'),
