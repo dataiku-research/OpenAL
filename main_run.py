@@ -136,8 +136,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     args = {
         "dataset" : dataset_id,
-        "n_seed" : 1, 
-        'n_iter' : 2, 
+        "n_seed" : 10, 
+        'n_iter' : 10, 
         'batch_size' : batch_size,     #0.01% of #1471 represents 8 samples -> far too small for an AL experiment      #Explaination : #1471 is very small with a lot of features -> need more samples to learn
         'batch_size_ratio' : (batch_size / len(X)) *100
         }
@@ -153,12 +153,12 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
     methods = {
         'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
         # # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
         # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
     }
@@ -247,6 +247,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     new_selected_index = sampler.select_samples(X[splitter.non_selected])
                                     
                     splitter.add_batch(new_selected_index)
+
+                    print('TEST',len(new_selected_index), len(np.unique(new_selected_index)), args["batch_size"])
+                    print(np.unique(new_selected_index, return_counts=True))
 
                     assert(splitter.current_iter == (i+1))
                     assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size'])) #+1 for initialisation batch
