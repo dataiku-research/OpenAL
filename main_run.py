@@ -248,8 +248,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                                     
                     splitter.add_batch(new_selected_index)
 
-                    print('TEST',len(new_selected_index), len(np.unique(new_selected_index)), args["batch_size"])
-                    print(np.unique(new_selected_index, return_counts=True))
+                    # print('TEST',len(new_selected_index), len(np.unique(new_selected_index)), args["batch_size"])
+                    # print(np.unique(new_selected_index, return_counts=True))
 
                     assert(splitter.current_iter == (i+1))
                     assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size'])) #+1 for initialisation batch
