@@ -1,0 +1,9 @@
+
+----- Dataset 41138 ----- 
+
+	confidence - 98.9 \pm(0.1)
+	entropy - 98.9 \pm(0.1)
+	kmeans - 98.5 \pm(0.1)
+	margin - 98.9 \pm(0.1)
+	random - 98.4 \pm(0.1)
+	wkmeans - 99.0 \pm(0.0)

@@ -1,0 +1,9 @@
+
+----- Dataset cifar10_simclr ----- 
+
+	confidence - 84.7 \pm(0.7000000000000001)
+	entropy - 84.2 \pm(0.8)
+	kmeans - 84.8 \pm(0.5)
+	margin - 86.5 \pm(0.3)
+	random - 85.2 \pm(0.4)
+	wkmeans - 86.6 \pm(0.2)
