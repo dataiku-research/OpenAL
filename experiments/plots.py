@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 from cardinal.plotting import plot_confidence_interval
+import os
 
 
 PLOT_TYPE =  "results"  #   "results", "variance", "correlations"
@@ -13,7 +14,7 @@ n_seed=10
 metrics = [
         ('Accuracy','accuracy_test.csv'),
         ('F-Score','f_score_test.csv'),
-        ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
+        # ('ROC-AUC-Score','ROC_AUC_score_test.csv'),
         ('Contradictions', 'contradiction_test.csv'),
         ('Agreement','agreement_test.csv'),
         # ('Trustscore','test_trustscore.csv'),
@@ -24,10 +25,14 @@ metrics = [
     ]
 save_folder = 'experiments'
 
+plt.rc('font', size=20)          # controls default text sizes
+plt.rc('legend', fontsize=20)    # legend fontsize
+plt.rc('lines', linewidth=3)
+
 
 # PLOT RESULTS
 if PLOT_TYPE =='results':
-    dataset_ids = [1461, 1502, 40922]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
+    dataset_ids = [1590, 42395, 43551, 42803, 41162]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
     for dataset_id in dataset_ids:
         for i, (metric_name, filename) in enumerate(metrics):
             # try:
@@ -52,11 +57,16 @@ if PLOT_TYPE =='results':
                 plt.xlabel('AL iteration')
                 plt.ylabel(metric_name)
                 plt.title('{} metric'.format(metric_name))
+                plt.grid()
                 plt.legend()
                 plt.tight_layout()
-                plt.savefig(f'results_{dataset_id}/plot-'+metric_name+'.png')
+                save_dir_path = f'results_{dataset_id}/paper-plots/'
+                filename = f'plot-'+metric_name+'.png'
+                if not os.path.isdir(save_dir_path):
+                    os.makedirs(save_dir_path)
+                plt.savefig(save_dir_path+filename)
 
-        plt.show()    
+        # plt.show()    
         for i in range(len(metrics)): plt.figure(i).clear()        
 
 
