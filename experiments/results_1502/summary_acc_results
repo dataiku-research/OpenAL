@@ -1,0 +1,11 @@
+
+----- Dataset 1502 ----- 
+
+	confidence - 99.2 \pm(0.2)
+	entropy - 99.2 \pm(0.2)
+	iwkmeans - 99.5 \pm(0.1)
+	kcenter - 99.5 \pm(0.1)
+	kmeans - 99.3 \pm(0.0)
+	margin - 99.2 \pm(0.2)
+	random - 98.7 \pm(0.4)
+	wkmeans - 99.5 \pm(0.1)

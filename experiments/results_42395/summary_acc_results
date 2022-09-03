@@ -1,0 +1,10 @@
+
+----- Dataset 42395 ----- 
+
+	confidence - 89.8 \pm(0.1)
+	entropy - 89.8 \pm(0.1)
+	iwkmeans - 89.8 \pm(0.0)
+	kmeans - 89.60000000000001 \pm(0.1)
+	margin - 89.8 \pm(0.1)
+	random - 89.7 \pm(0.1)
+	wkmeans - 89.8 \pm(0.1)

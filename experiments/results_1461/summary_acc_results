@@ -1,0 +1,11 @@
+
+----- Dataset 1461 ----- 
+
+	confidence - 89.4 \pm(0.1)
+	entropy - 89.4 \pm(0.1)
+	iwkmeans - 89.4 \pm(0.1)
+	kcenter - 88.8 \pm(0.3)
+	kmeans - 88.8 \pm(0.2)
+	margin - 89.4 \pm(0.1)
+	random - 88.8 \pm(0.3)
+	wkmeans - 89.4 \pm(0.1)

@@ -1,0 +1,10 @@
+
+----- Dataset 1590 ----- 
+
+	confidence - 81.5 \pm(1.0)
+	entropy - 81.5 \pm(1.0)
+	iwkmeans - 82.5 \pm(1.2)
+	kmeans - 80.7 \pm(0.8)
+	margin - 81.5 \pm(1.0)
+	random - 81.8 \pm(1.0)
+	wkmeans - 82.89999999999999 \pm(0.6)
