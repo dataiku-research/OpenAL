@@ -25,7 +25,10 @@ def get_my_sampler(params : dict) :
     )
     return sampler
 
+# iwkmeans + kcenter (all) : 40922 41138 mnist cifar10 cifar10_simclr
+# kcenter (only): 1590 42395 43439 43551 42803 41162
 
+# python main.py 1590 42395 43439 43551 42803 41162
 # python main.py -datasets_ids 1461 1471 1502 1590 40922 41138 42395 43439 43551 42803 41162 cifar10 cifar10_simclr mnist
 
 parser = argparse.ArgumentParser()

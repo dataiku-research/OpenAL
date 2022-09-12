@@ -1,9 +1,0 @@
-
------ Dataset 40922 ----- 
-
-	confidence - 97.7 \pm(0.3)
-	entropy - 97.7 \pm(0.3)
-	kmeans - 95.89999999999999 \pm(0.7000000000000001)
-	margin - 97.7 \pm(0.3)
-	random - 96.6 \pm(0.5)
-	wkmeans - 97.6 \pm(0.4)
