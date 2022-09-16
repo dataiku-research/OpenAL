@@ -1,0 +1,7 @@
+----- Experiments parameters ----- 
+
+	dataset :	mnist
+	n_seed :	10
+	n_iter :	10
+	batch_size :	70
+	batch_size_ratio :	0.1

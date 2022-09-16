@@ -69,3 +69,13 @@ seed,method,n_iter,dataset,value
 9,kmeans,0,1590,0.0
 9,wkmeans,0,1590,0.0
 9,iwkmeans,0,1590,0.0
+0,kcenter,0,1590,0.0
+1,kcenter,0,1590,0.0
+2,kcenter,0,1590,0.0
+3,kcenter,0,1590,0.0
+4,kcenter,0,1590,0.0
+5,kcenter,0,1590,0.0
+6,kcenter,0,1590,0.0
+7,kcenter,0,1590,0.0
+8,kcenter,0,1590,0.0
+9,kcenter,0,1590,0.0
