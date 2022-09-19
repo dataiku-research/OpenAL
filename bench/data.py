@@ -228,7 +228,8 @@ def preprocess_mnist():
 
 def preprocess_cifar10():
     best_model = lambda seed: MLPClassifier(random_state=seed)    #TODO
-    folder_path = "/data.nfs/data_al/cifar10/"
+    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
+    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
 
     # Embeddings from ImageNet
     X = np.load(folder_path+'cifar_embeddings.npy')
@@ -241,7 +242,8 @@ def preprocess_cifar10():
 
 def preprocess_cifar10_simclr():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    folder_path = "/data.nfs/data_al/cifar10/"
+    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
+    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
 
     # Embeddings from contrastive learning
     X = np.load(folder_path+'simclr_embed.npy')
