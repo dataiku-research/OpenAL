@@ -30,7 +30,7 @@ def get_my_sampler(params : dict) :
 
 # python main.py 1590 42395 43439 43551 42803 41162
 # python main.py 40922 41138 mnist cifar10 cifar10_simclr
-# python main.py -datasets_ids 1461 1471 1502 1590 40922 41138 42395 43439 43551 42803 41162 cifar10 cifar10_simclr mnist
+# python main.py -datasets_ids 1461 1471 1502 1590 40922 41138 41162 42395 42803 43439 43551 cifar10 cifar10_simclr mnist
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset_ids', type=str, nargs='*', help='List of datasets to process', default=[])
