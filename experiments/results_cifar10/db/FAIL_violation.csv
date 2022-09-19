@@ -70,3 +70,12 @@ seed,method,n_iter,dataset,value
 8,kmeans,0,cifar10,0.0
 8,wkmeans,0,cifar10,0.0
 8,iwkmeans,0,cifar10,0.0
+8,kcenter,0,cifar10,0.0
+9,random,0,cifar10,0.0
+9,margin,0,cifar10,0.0
+9,confidence,0,cifar10,0.0
+9,entropy,0,cifar10,0.0
+9,kmeans,0,cifar10,0.0
+9,wkmeans,0,cifar10,0.0
+9,iwkmeans,0,cifar10,0.0
+9,kcenter,0,cifar10,0.0
