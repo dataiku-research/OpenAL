@@ -898,7 +898,7 @@ class AutoEmbedder:
             data = model.apply(X).reshape([X.shape[0], -1])
             self.ohe = OneHotEncoder().fit(data)
             transformed = self.ohe.transform(data)
-            n_components = min(transformed.shape[1], int(np.log(data.shape[1]) / (0.25 ** 2)))
+            n_components = min(transformed.shape[1] - 1, int(np.log(data.shape[1]) / (0.25 ** 2)))
             self.pca = TruncatedSVD(n_components=n_components)
             self.pca.fit(transformed)
 
