@@ -8,7 +8,7 @@ n_iter = 10
 n_seed=10
 # Up to date datasets : [1461, 1471, 1502, 1590, 41162, 42395, 43439, 43551, 42803] 
 # Manually added from older results : 40922, 41138, 'cifar10', 'cifar10_simclr', 'mnist'
-dataset_ids = [1461, 1471, 1502, 1590, 41162, 42395, 43439, 43551, 42803, 40922, 41138, 'cifar10', 'cifar10_simclr', 'mnist']   # 40922, 41138 missing      #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
+dataset_ids = [1461, 1471, 1502, 1590, 40922, 41138, 41162, 42395, 43439, 43551, 42803, 40922, 41138, 'cifar10', 'cifar10_simclr', 'mnist']   # 40922, 41138 missing      #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
 
 datasets_samplers_performances = {}      #shape (n_dataset, n_samplers)
 for dataset_id in dataset_ids:
@@ -53,7 +53,7 @@ with open('BENCH_SUMMARY_acc_results', 'w') as f:
         txt = f"{dataset_id}"
         for sampler_ac, sampler_std in dataset_perfs:
             if sampler_ac is not None:
-                txt += f' & {np.round(sampler_ac*100, 1)} (\pm{np.round(sampler_std*100, 1)})'
+                txt += f' & {np.round(sampler_ac*100, 1)} ($\pm${np.round(sampler_std*100, 1)})'
             else:
                 txt += f' &  '
         f.write(txt + '\\\\'+'\n')
