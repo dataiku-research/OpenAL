@@ -1,33 +1,37 @@
+"""
+Script to share benchmark user's sampler results inside the saved benchmark results
+
+Can be run alone to undo a merge with the 'undo_merge' function
+"""
+
+
 # The goal of this function is to share the user result and add them inside registered benchmark results
 import os
 import pandas as pd
 import tkinter as tk
 
 
-# TODO : is this try dead?
 def share_results(dataset_id):
-    # try:
-    #     app = Application(dataset_id)
-    # except:
+    # app = Application(dataset_id)
+    print('\n [QUESTION] Do you want to share/merge your sampler results for this dataset inside the benchmark ?')
+    res = input('Yes = 1/ No = 0 :')
+    
+    while res not in ['1', '0']:
+        print("[INPUT ERROR] Please chose an answer between '0' and '1'")
+
         print('\n [QUESTION] Do you want to share/merge your sampler results for this dataset inside the benchmark ?')
         res = input('Yes = 1/ No = 0 :')
-        
-        while res not in ['1', '0']:
-            print("[INPUT ERROR] Please chose an answer between '0' and '1'")
 
-            print('\n [QUESTION] Do you want to share/merge your sampler results for this dataset inside the benchmark ?')
-            res = input('Yes = 1/ No = 0 :')
-
-        if res=='1':
-            merge_results(dataset_id=dataset_id)
-            print('[INFO] Results saved')
-        else:
-            print('[INFO] Results not saved')
+    if res=='1':
+        merge_results(dataset_id=dataset_id)
+        print('[INFO] Results merged with benchmark results')
+    else:
+        print('[INFO] Results not merged with benchmark results')
 
 
 
 def merge_results(dataset_id):
-    # Add all user csv results inside registered csv results
+    """Merge user sampler csv results inside benchmark registered csv results"""
     dir_path = f'user_results/results_{dataset_id}/db/'
 
     list_csv_filenames = [ f for f in os.listdir(dir_path) if ( 

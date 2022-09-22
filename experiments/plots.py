@@ -1,11 +1,24 @@
+"""
+Script to plot again benchmark dataset results
+
+How to use:
+- Specify the dataset ids you want to process and from which you want to plot the results in the dataset_ids list below
+- Run the script from the experiment folder
+"""
+
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.colors as mcolors
+from itertools import cycle
 import pandas as pd
 from cardinal.plotting import plot_confidence_interval
 import os
 
 
-PLOT_TYPE =  "results"  #   "results", "variance", "correlations"
+PLOT_TYPE =  "results"  #   "results", "variance"
+save_folder = 'experiments'
+dataset_ids = []    #[1461, 1471, 1502, 1590, 40922, 41138, 41162, 42395, 42803, 43439, 43551, 'cifar10', 'cifar10_simclr', 'mnist]
+assert len(dataset_ids) > 0
 
 
 
@@ -23,7 +36,8 @@ metrics = [
         ('Top-Exploration','top_exploration.csv'),
         # ('Closest','this_closest.csv') 
     ]
-save_folder = 'experiments'
+
+multiclass_tasks = ['42803', 'cifar10', 'cifar10_simclr', 'cifar100', 'cifar100_simclr', 'mnist']
 
 plt.rc('font', size=20)          # controls default text sizes
 plt.rc('legend', fontsize=20)    # legend fontsize
@@ -32,50 +46,50 @@ plt.rc('lines', linewidth=3)
 
 # PLOT RESULTS
 if PLOT_TYPE =='results':
-    dataset_ids = [1590, 42395, 43551, 42803, 41162]    #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
     for dataset_id in dataset_ids:
+        is_biclass_task = dataset_id not in multiclass_tasks
         for i, (metric_name, filename) in enumerate(metrics):
-            # try:
 
-                # Plot new sampler results
+            # Plot new sampler results
 
-                df = pd.read_csv(f'results_{dataset_id}/db/{filename}')
-                # sampler_name = np.unique(df["method"].values)[0]    #TODO
+            df = pd.read_csv(f'results_{dataset_id}/db/{filename}')
+            method_names = np.unique(df["method"].values)
+            colors = {method_name:key for method_name, (key, _) in zip(method_names, cycle(mcolors.TABLEAU_COLORS.items()))}
 
-                #Loop in case their are several samplers tested here
-                method_names = np.unique(df["method"].values)
-                for sampler_name in method_names:
-                    all_metric = []
-                    for seed in range(n_seed):
-                        metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-                        all_metric.append(metric)
-                        
-                    plt.figure(i, figsize=(15,10))
-                    x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
-                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+            for sampler_name in method_names:
+                if is_biclass_task and sampler_name in ['confidence', 'margin']:   # We will plot with entropy metrics (indentical in biclass)
+                    continue
 
-                plt.xlabel('AL iteration')
-                plt.ylabel(metric_name)
-                plt.title('{} metric'.format(metric_name))
-                plt.grid()
-                plt.legend()
-                plt.tight_layout()
-                save_dir_path = f'results_{dataset_id}/paper-plots/'
-                filename = f'plot-'+metric_name+'.png'
-                if not os.path.isdir(save_dir_path):
-                    os.makedirs(save_dir_path)
-                plt.savefig(save_dir_path+filename)
+                all_metric = []
+                for seed in range(n_seed):
+                    metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
+                    all_metric.append(metric)
+                    
+                plt.figure(i, figsize=(15,10))
+                x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
+                if is_biclass_task and sampler_name == 'entropy':
+                    plot_confidence_interval(x_data, all_metric, label='{}'.format('uncertainty'.capitalize()), color=colors[sampler_name])
+                else:
+                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name.capitalize()), color=colors[sampler_name])
+                
+
+            plt.xlabel('AL iteration')
+            plt.ylabel(metric_name)
+            plt.title('{} metric'.format(metric_name))
+            plt.grid()
+            plt.legend()
+            plt.tight_layout()
+            save_dir_path = f'results_{dataset_id}/paper-plots/'
+            if not os.path.isdir(save_dir_path):
+                os.makedirs(save_dir_path)
+            plt.savefig(save_dir_path+ f'plot-'+metric_name+'.png')
+            plt.savefig(save_dir_path+ f'plot-'+metric_name+'.pdf')
 
         # plt.show()    
         for i in range(len(metrics)): plt.figure(i).clear()        
 
 
-
-
-
-
 if PLOT_TYPE == "variance":
-    dataset_ids = [1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162]
     metric_name, filename = metrics[0]  #variance on accuracy
 
     df = pd.read_csv('results_{}/'.format(dataset_ids[0])+filename)

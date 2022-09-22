@@ -1,14 +1,21 @@
+"""
+Script to compute benchmark results in a latex format
+
+How to use:
+You just have to specify the dataset ids you want to process and from which you want to get the results in the dataset_ids list below
+"""
+
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 from cardinal.plotting import plot_confidence_interval
 import os
 
+dataset_ids = []    #[1461, 1471, 1502, 1590, 40922, 41138, 41162, 42395, 42803, 43439, 43551, 'cifar10', 'cifar10_simclr', 'mnist]
+assert len(dataset_ids) > 0
+
 n_iter = 10
 n_seed=10
-# Up to date datasets : [1461, 1471, 1502, 1590, 41162, 42395, 43439, 43551, 42803] 
-# Manually added from older results : 40922, 41138, 'cifar10', 'cifar10_simclr', 'mnist'
-dataset_ids = [1461, 1471, 1502, 1590, 41162, 42395, 43439, 43551, 42803, 40922, 41138, 'cifar10', 'cifar10_simclr', 'mnist']   # 40922, 41138 missing      #[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551, 42803, 41162, 'cifar10', 'cifar10_simclr', 'mnist]
 
 datasets_samplers_performances = {}      #shape (n_dataset, n_samplers)
 for dataset_id in dataset_ids:
@@ -59,31 +66,3 @@ with open('BENCH_SUMMARY_acc_results', 'w') as f:
         f.write(txt + '\\\\'+'\n')
 
 f.close()
-
-
-# #Global writing
-# df = pd.read_csv(f'results_{dataset_ids[0]}/db/accuracy_test.csv')
-# method_names = np.unique(df["method"].values)
-# with open('BENCH_SUMMARY_acc_results', 'w') as f:
-
-#     txt = "sampler name"
-#     for dataset_id in dataset_ids:
-#         txt += f' & {dataset_id}'
-#     f.write(txt + '\n')
-
-#     for sampler_name in method_names:
-#         # if sampler_name != 'kcenter':
-#         sampler_perfs = [datasets_samplers_performances[f'{dataset_id}'][f'{sampler_name}'] 
-#                             if f'{sampler_name}' in datasets_samplers_performances[f'{dataset_id}'].keys() 
-#                             else (None, None)
-#                                 for dataset_id in dataset_ids]
-        
-#         txt = f"{sampler_name}"
-#         for sampler_ac, sampler_std in sampler_perfs:
-#             if sampler_ac is not None:
-#                 txt += f' & {sampler_ac} \pm({sampler_std})'
-#             else:
-#                 txt += f' &  '
-#         f.write(txt + '\\\\'+'\n')
-
-# f.close()

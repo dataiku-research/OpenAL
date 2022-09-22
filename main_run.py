@@ -41,13 +41,15 @@ import bench.prose.datainsights as di
 
 # Plots
 from matplotlib import pyplot as plt
-from cardinal.plotting import plot_confidence_interval
+import matplotlib.colors as mcolors
+from itertools import cycle
+from bench.plotting import plot_confidence_interval # Upgraded version of cardinal plot_confidence_interval method
+# from cardinal.plotting import plot_confidence_interval
 
 import joblib
 from tqdm import tqdm
 # import line_profiler
 # profile = line_profiler.LineProfiler()
-import pickle
 # import time
 
 
@@ -106,7 +108,7 @@ def run_benchmark(new_sampler_generator,
     for dataset_id in datasets_ids:
         assert (dataset_id is not None)
         assert type(dataset_id) == str, f'{dataset_id} is of type {type(dataset_id)} instead of type "str"'
-        assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], f"{dataset_id} not in available datasets :\n- 1461 \n- 1471\n- 1502\n- 1590\n- 40922\n- 41138\n- 42395\n- 43439\n- 43551\n- 42803\n- 41162\n- cifar10\n- cifar10_simclr\n- mnist"
+        assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr','cifar100', 'cifar100_simclr', 'mnist'], f"{dataset_id} not in available datasets :\n- 1461 \n- 1471\n- 1502\n- 1590\n- 40922\n- 41138\n- 42395\n- 43439\n- 43551\n- 42803\n- 41162\n- cifar10\n- cifar10_simclr\n- cifar100\n- cifar100_simclr\n- mnist"
 
     for dataset_id in datasets_ids:
         run(dataset_id, new_sampler_generator, sampler_name)
@@ -116,11 +118,10 @@ def run_benchmark(new_sampler_generator,
 def run(dataset_id, new_sampler_generator, sampler_name):
     print(f'\n--- RUN DATASET {dataset_id} ---\n')
 
-    save_folder = 'experiments'
+    save_folder = 'user_results'
     if not os.path.isdir(f'{save_folder}/results_{dataset_id}/'): os.makedirs(f'{save_folder}/results_{dataset_id}/')
     db = CsvDb(f'{save_folder}/results_{dataset_id}/db')
 
-    # X, y, transformer, best_model = get_openml(dataset_id)
     preproc = get_dataset(dataset_id)
     if len(preproc) == 3:
         X, y, best_model = preproc
@@ -132,39 +133,41 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     fit_clf = lambda clf, X, y: clf.fit(X, y)
 
     n_classes = len(np.unique(y))
-    batch_size = int(.005 * X.shape[0]) if dataset_id=='1471' else int(.001 * X.shape[0])
+    batch_size = int(.005 * X.shape[0]) if dataset_id=='1471' else int(.001 * X.shape[0]) 
+    """
+    0.1% labelisation for all tasks expect for #1471 where we labelise 0.5% at each AL iteration
+    Explanation :
+        #1471 is very small with a lot of features
+        -> 0.01% of #1471 represents 8 samples : far too small for an AL experiment      
+        -> need more samples to learn
+    """
 
     args = {
         "dataset" : dataset_id,
         "n_seed" : 10, 
         'n_iter' : 10, 
-        'batch_size' : batch_size,     #0.01% of #1471 represents 8 samples -> far too small for an AL experiment      #Explaination : #1471 is very small with a lot of features -> need more samples to learn
+        'batch_size' : batch_size,
         'batch_size_ratio' : (batch_size / len(X)) *100
         }
 
-    two_step_beta = 10
-
-    # k_start = False
+    two_step_beta = 10  # Beta parameter for wkmeans sampler
     start_size = args['batch_size']
-    # oracle_error = False
 
-
-    # model_cache = dict()
-
+    # Samplers should reming commented as they have already been ran and saved in the benchmark results
     methods = {
-        'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),     #TODO : check whitch one to use
-        'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
+        # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
+        # # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
     }
 
     # Add new sampler method in the evaluated methods
-    # methods[sampler_name] = new_sampler_generator
+    methods[sampler_name] = new_sampler_generator
     assert len(methods.keys()) >0, "There are no sampling strategies to evaluate"
 
     def get_min_dist_per_class(dist, labels):
@@ -182,6 +185,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         return min_dist_per_class
 
     def run_AL_experiment(seed):
+        """Processes one AL experiment (corresponding to one fold)"""
         print('Iteration {}'.format(seed))
 
         for name_index, name in enumerate(methods):
@@ -202,21 +206,31 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
                 # Train test split 
 
-                splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
-                # test_indexes = load_indexes(dataset_id, seed, type='test')
-                # mask = np.full(X.shape[0], -1, dtype=np.int8)
-                # mask[test_indexes] = -2
-                # # TODO : revoir creation avec mask (wrt current_iter parameter )
-                # splitter = ActiveLearningSplitter.from_mask(mask)   # [INFO] We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
+                # #Admin first runs
+                # splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
+
+                #User run
+                test_indexes = load_indexes(dataset_id, seed, type='test')                                                              
+                mask = np.full(X.shape[0], -1, dtype=np.int8)
+                mask[test_indexes] = -2                                     # TODO : revoir creation avec mask (wrt current_iter parameter )
+                splitter = ActiveLearningSplitter.from_mask(mask)           # We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
 
 
                 #Initialisation
 
-                splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
-                first_index = np.where(splitter.selected == True)[0]
-                # first_index = load_indexes(dataset_id, seed, type='random')     # [INFO] We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
-                # splitter.add_batch(first_index, partial=True)
+                # #Admin first runs
+                # splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
+                # first_index = np.where(splitter.selected == True)[0]
 
+                #User run
+                first_index = load_indexes(dataset_id, seed, type='random') # We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
+                first_indexs_train = np.zeros(X.shape[0])
+                first_indexs_train[first_index] = True
+                first_indexs_train = np.where(first_indexs_train[splitter.train] == True)   #Projection of global first indexes on the train set indexes
+                splitter.initialize_with_indices(indices=first_indexs_train)
+
+                # splitter.add_batch(first_index, partial=True)
+                assert (np.arange(X.shape[0])[splitter.selected] == first_index).all()
                 assert(np.unique(y[first_index]).shape[0] == np.unique(y).shape[0]), f'{np.unique(y[first_index]).shape[0]} != {np.unique(y).shape[0]}'
 
 
@@ -234,12 +248,13 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
             
-                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i, train_dataset=X[splitter.train])  # HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION             #iter=i + 1, splitter=splitter
+                    ##############################################################
+                    #  HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION  #
+                    ##############################################################
+                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i, train_dataset=X[splitter.train])
                     """
                     train_dataset : labelised + unlabelised samples (all non test samples)
                     """
-                    # X_test = X[splitter.test]
-                    # params['X_test'] = X_test
 
                     sampler = method(DYNAMIC_PARAMS)
                     sampler.fit(X[splitter.selected], y[splitter.selected])
@@ -248,11 +263,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                                     
                     splitter.add_batch(new_selected_index)
 
-                    # print('TEST',len(new_selected_index), len(np.unique(new_selected_index)), args["batch_size"])
-                    # print(np.unique(new_selected_index, return_counts=True))
-
                     assert(splitter.current_iter == (i+1))
-                    assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size'])) #+1 for initialisation batch
+                    assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size']))   # +1 for initialisation batch
                     assert(splitter.batch_at(i).sum() == args['batch_size'])
 
                     config = dict(
@@ -265,6 +277,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     selected = splitter.selected_at(i)
                     batch = splitter.batch_at(i)
 
+
+                    # Computation metrics
 
                     # ================================================================================
 
@@ -295,7 +309,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         pos_label = None
                         sum = np.sum(counts)
                         for label_id in uniques:
-                            if (counts[label_id] / sum) <= (0.2 / n_classes):   # if class ratio is under 10% in bi-class      #TODO : define threshold
+                            if (counts[label_id] / sum) <= (0.2 / n_classes):   # if class ratio is under 0.2 / nb_classes in multi-class
                                 labels.append(label_id)
                         average_f_score = 'micro'
                     
@@ -397,9 +411,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                         db.upsert('self_violation', config, score)
                         db.upsert('batch_violation', config, score)
 
-                        # Save error 
-                        db.upsert('FAIL_violation', config,  score)
-
 
 
                     # ================================================================================
@@ -452,8 +463,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
             df_to_save = pd.concat([df_to_save, df], ignore_index=True)
             df_to_save.to_csv(f'{save_folder}/results_{dataset_id}/indexes.csv', index=False)
 
-        # End run_AL_experiment
-
 
 
     # start = time.time()
@@ -468,19 +477,18 @@ def run(dataset_id, new_sampler_generator, sampler_name):
         f.write("----- Experiments parameters ----- \n\n")
         for key in args.keys():
             f.write(f'\t{key} :\t{args[key]}\n')
-        # pickle.dump(args, f)
     f.close()
 
     # Plots results from saved csv
     plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'], save_folder=save_folder)
 
     # Propose to merge current sampler results to benchmark resutls
-    # share_results(dataset_id)
+    share_results(dataset_id)
 
 
 def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
+    """Plots experiments results for the current dataset (both user sampler results and previously saved benchmark sampler results)"""
 
-    # x_data = np.arange(n_iter)
     metrics = [
         ('Accuracy','accuracy_test.csv'),
         ('F-Score','f_score_test.csv'),
@@ -493,38 +501,50 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
         ('Top-Exploration','top_exploration.csv'),
         # ('Closest','this_closest.csv') 
     ]
+    multiclass_tasks = ['42803', 'cifar10', 'cifar10_simclr', 'cifar100', 'cifar100_simclr', 'mnist']
+    is_biclass_task = dataset_id not in multiclass_tasks
+
+    plt.rc('font', size=20)          # controls default text sizes
+    plt.rc('legend', fontsize=20)    # legend fontsize
+    plt.rc('lines', linewidth=3)
 
     for i, (metric_name, filename) in enumerate(metrics):
+        plt.figure(i, figsize=(15,10))
 
-        # Plot new sampler results
+        # Plot saved samplers results from the benchmark and then new sampler results
 
-        df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')
+        df_bench = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')   # Benchmark samplers results
+        bench_method_names = np.unique(df_bench["method"].values)
+
+        df = pd.read_csv(f'{save_folder}/results_{dataset_id}/db/{filename}')       # New sampler results
         method_names = np.unique(df["method"].values)
+
+        colors = {method_name:key for method_name, (key, _) in zip(np.concatenate([bench_method_names,method_names]), cycle(mcolors.TABLEAU_COLORS.items()))}
+
+
+        for sampler_name in bench_method_names:
+            if is_biclass_task and sampler_name in ['confidence', 'margin']:   # We will plot with entropy metrics (indentical in biclass)
+                continue
+
+            all_metric = []
+            for seed in range(n_seed):
+                metric = df_bench.loc[(df_bench["method"] == sampler_name) & (df_bench["seed"]== seed)]['value'].values
+                all_metric.append(metric)
+            
+            x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
+            if is_biclass_task and sampler_name == 'entropy':
+                plot_confidence_interval(x_data, all_metric, label='{}'.format('uncertainty'.capitalize()), color=colors[sampler_name])
+            else:
+                plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name.capitalize()), color=colors[sampler_name])
+
         for sampler_name in method_names: #Loop in case their are several samplers tested here
             all_metric = []
             for seed in range(n_seed):
                 metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
                 all_metric.append(metric)
                 
-            plt.figure(i, figsize=(15,10))
             x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
-            plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
-        
-
-        # Plot other samplers results from the benchmark
-        #TODO : uncomment for user use
-        # plot_benchmark_sampler_results(i, dataset_id, filename, x_data, n_seed)
-        # df = pd.read_csv(f'experiments/results_{dataset_id}/db/{filename}')
-        # method_names = np.unique(df["method"].values)
-
-        # for sampler_name in method_names:
-        #     all_metric = []
-        #     for seed in range(n_seed):
-        #         metric = df.loc[(df["method"] == sampler_name) & (df["seed"]== seed)]['value'].values
-        #         all_metric.append(metric)
-            
-        #     plt.figure(i, figsize=(15,10))
-        #     plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name))
+            plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name.capitalize()), color=colors[sampler_name])
 
 
         plt.xlabel('AL iteration')
@@ -532,7 +552,8 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
         plt.title('{} metric'.format(metric_name))
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png')
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.pdf')
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png') #For opening in code editor
 
     if show:
         plt.show()
@@ -542,7 +563,7 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
 
 def load_indexes(dataset_id, seed, type):
     """
-    Instead of only seeding the random initialisation, we use the indexes that have been saved during the previous benchmark run.
+    Instead of only seeding the random initialisation, we use the indexes that have been saved during the first benchmark run.
     Hence, all the samplers will have the same random initialisation samples
     """
     # if type == 'one_class':
@@ -556,5 +577,4 @@ def load_indexes(dataset_id, seed, type):
 
     df = pd.read_csv(f'experiments/results_{dataset_id}/indexes.csv')
 
-    # return df.loc[(df["seed"] == seed) & (df["type"]== type)]['value'].values   # TODO When column name will be updated
     return df.loc[(df["seed"] == seed) & (df["type"]== type)]['index'].values   

@@ -20,36 +20,21 @@ from tensorflow.keras.datasets import mnist, cifar10, cifar100
 # https://gist.github.com/devanshuDesai/d3bdc9270395490cae3b690632445e0e
 def transform_date_string_to_timestamp(date_col):
     """Convert date strings "01/12/2011" to timestamp format"""
-    # date_col['Date'] = date_col['Date'].apply(lambda x: time.mktime(datetime.datetime.strptime(str(x), "%d/%m/%Y").timetuple()) if x is not None else None)
     for sample in date_col:
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%d/%m/%Y").timetuple()) if sample[0] is not None else None
     return date_col
 
 def transform_time_string_to_timestamp(time_col):
     """Convert time strings "18:11" to timestamp format"""
-    # time_col['Time'] =  time_col['Time'].apply(lambda x: time.mktime(datetime.datetime.strptime(str(x), "%H:%M").timetuple()) if x is not None else None)
     for sample in time_col:
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%H:%M").timetuple()) if sample[0] is not None else None
     return time_col
 
 def transform_date2_string_to_timestamp(date_col):
     """Convert date strings "2016-04-29T18:38:08Z" to timestamp format"""
-    # date_col['Date'] = date_col['Date'].apply(lambda x: time.mktime(datetime.datetime.strptime(str(x), "%d/%m/%Y").timetuple()) if x is not None else None)
     for sample in date_col:
         sample[0] = time.mktime(datetime.datetime.strptime(str(sample[0]), "%Y-%m-%dT%H:%M:%SZ").timetuple()) if sample[0] is not None else None
     return date_col
-
-# def transform_flatten_MNIST(X):
-#     return X.astype('float32').reshape((X.shape[0], -1)) / 255.0
-
-# def transform_CIFAR10(X):
-#     #TODO 32x32 RGB image
-#     return X
-
-# def transform_CIFAR100(X):
-#     #TODO 
-#     return X
-
 
 class ColumnType(Enum):
     NUM = 1
@@ -92,7 +77,7 @@ class BetterTransformer(TransformerMixin):
                                     #clone(self.category_transformer)
                 else:
                     transformer = Pipeline([
-                                        ('Imputer', SimpleImputer(strategy='most_frequent')),   #TODO : stratégie discutable
+                                        ('Imputer', SimpleImputer(strategy='most_frequent')),
                                         ('OneHotEncoder', OneHotEncoder(sparse=False, categories=[np.unique(full_X[:, i][~pd.isna(full_X[:, i])])]))
                                         ]) 
                                         #clone(self.category_transformer(categories=[np.unique(full_X[:, i])]))
@@ -108,7 +93,7 @@ class BetterTransformer(TransformerMixin):
                                         ('Scaler', StandardScaler())]) 
                 transformers.append(('date_{}'.format(i), transformer, [i]))
             elif type == DATE2:
-                # TODO   .weekday()
+                # possible use of .weekday()
                 transformer = Pipeline([('convert_date2', FunctionTransformer(transform_date2_string_to_timestamp)),
                                         ('Scaler', StandardScaler())]) 
                 transformers.append(('date_{}'.format(i), transformer, [i]))
@@ -127,7 +112,6 @@ class BetterTransformer(TransformerMixin):
         Xt = np.empty((X.shape[0], len(self.transformer.transformers_)))
         for i, (name, transformer, _) in enumerate(self.transformer_.transformers_):
             Xt[:, i] = transformer.inverse_transform(X[self.transformer_.output_indices[name]])
-
         return Xt
 
 
@@ -172,8 +156,7 @@ def preprocess_41138(data):
 
 
 def preprocess_41162(data):
-    #Problème : problème d'encoding d'une valeur numérique (col 0) qui apparait dans le train mais pas dans le test ... PAS NORMAL CAR NUMERIQUE
-    types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]    # 3ème et 4ème features ajoutées en catégorielles
+    types = [NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM]
     best_model = lambda seed: GradientBoostingClassifier(max_depth=3, n_estimators=100, random_state=seed)
     transformer = BetterTransformer(
         types,
@@ -188,7 +171,7 @@ def preprocess_42395(data):
 
 
 def preprocess_42803(data):
-    types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT,    NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME,      NUM        , DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location), NUM (31) (Local_Authority_(District) CAT -> NUM)
+    types = [DROP, CAT,  CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, NUM, CAT, NUM, CAT, NUM, CAT, NUM, NUM, NUM, NUM, CAT, CAT, CAT, CAT, DATE, CAT, TIME, NUM, DROP, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, NUM, NUM, CAT, CAT, DROP, CAT, CAT, CAT, CAT, NUM, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT, CAT]  #1rst DROP replace NUM, 2nd DROP replace NUM (Local_Authority_(Highway)), 3rd DROP replace NUM (LSOA_of_Accident_Location), NUM (31) (Local_Authority_(District) CAT -> NUM)
     best_model = lambda seed: GradientBoostingClassifier(max_depth=8, n_estimators=100, random_state=seed)
     transformer = BetterTransformer(
         types,
@@ -197,9 +180,6 @@ def preprocess_42803(data):
 
 
 def preprocess_43439(data):
-    #TODO : extract hours and day of week more
-    # .weekday()
-
     # Adding new features to the dataset (extract hours and day of week more)
     # date_col = data['date']
     # weekday_col = transform_date2_string_to_timestamp(date_col)
@@ -221,13 +201,12 @@ def preprocess_mnist():
 
     X = X.astype('float32').reshape((X.shape[0], -1)) / 255.0
 
-    best_model = lambda seed: MLPClassifier(random_state=seed)    #TODO
-    # transformer = Pipeline([('MNIST preprocessing', FunctionTransformer(transform_flatten_MNIST))]) #TODO class transformer for images
+    best_model = lambda seed: MLPClassifier(random_state=seed)
 
     return X, y, best_model#, transformer
 
 def preprocess_cifar10():
-    best_model = lambda seed: MLPClassifier(random_state=seed)    #TODO
+    best_model = lambda seed: MLPClassifier(random_state=seed)
     # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
     folder_path = "/data/nfs/data_al/cifar10/"  #dku24
 
@@ -253,7 +232,8 @@ def preprocess_cifar10_simclr():
 
 def preprocess_cifar100():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    folder_path = "/data.nfs/data_al/cifar100/"
+    # folder_path = "/data.nfs/data_al/cifar100/"
+    folder_path = "/data/nfs/data_al/cifar100/" #dku24
 
     # Embeddings from ImageNet
     X = np.load(folder_path+'cifar_embeddings.npy')
@@ -266,7 +246,8 @@ def preprocess_cifar100():
 
 def preprocess_cifar100_simclr():
     best_model = lambda seed: MLPClassifier(max_iter=2000, random_state=seed)
-    folder_path = "/data.nfs/data_al/cifar100/"
+    # folder_path = "/data.nfs/data_al/cifar100/"
+    folder_path = "/data/nfs/data_al/cifar100/" #dku24
 
     # Embeddings from contrastive learning
     X = np.load(folder_path+'simclr_embed.npy')
@@ -293,8 +274,6 @@ def get_openml(dataset_id):
     else:
         X, types, best_model, transformer = preproc
     y = LabelEncoder().fit_transform(y)
-
-    # print(X)
 
     return X.values, y, transformer, best_model
 

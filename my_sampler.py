@@ -1,5 +1,7 @@
-# This is where you should define how your sampler is working
-# You can find a reminder of the 2 functions needed inside the sampler class below
+"""
+This is where you should define how your sampler is processing
+You can find a reminder of the 2 functions 'fit' and 'select_samples' needed inside the sampler class below
+"""
 
 import numpy as np
 from cardinal.typeutils import RandomStateType

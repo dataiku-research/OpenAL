@@ -1,16 +1,16 @@
-# benchmark_tabular_active_learning
-Benchmarking active learning on tabular datasets
+# Active Learning Benchmark
+This repository is the official implementation of the active learning benchmark NAME PAPER
+# TODO name
 
 
-## Dataset run notes:
-- 42395, 1502, 40922, 43439 : Ok 
-- 1461, 1590, 1471, 41138 : Assertions learning failed
-- 43551 : metric trustscore skipped (because of shape problem when callin trustscorer.score())
-- NOT OK 41162, 42803 : attente best model
+# A VOIR 
+- Mettre un path générique pour le loading des embeddings cifar + remove old paths 
+- Ratio définissant la classe minoritaire pour l'évaluation du F-Score : Line 300 main_run.py -> if (counts[label_id] / sum) <= (0.2 / n_classes):
+- Supprimer le folder 'datasets' qui corresponds au folder de recherche de datasets avec d'anciens scripts sales (old runs + suppression cat features) ?
+- Supprimer folder best model ?
+
 
 ## Datasets characteristics
-
-[1461, 1471, 1502, 1590, 40922, 41138, 42395, 43439, 43551]
 
 ### 1461 - bank-marketing
 https://www.openml.org/search?type=data&status=active&id=1461
@@ -24,6 +24,8 @@ number of classes	2
 number of features	17
 number of numeric features	7
 
+Model used : Random Forest
+
 ### 1471 - eeg-eye-state
 https://www.openml.org/search?type=data&status=active&id=1471
 
@@ -34,12 +36,16 @@ number of instances	14980
 number of features	15
 number of classes	2
 
+Model used : Multi Layer Perceptron
+
 ### 1502 - skin-segmentation
 https://www.openml.org/search?type=data&status=active&id=1502
 
 number of instances	245057
 number of features	4
 number of classes	2
+
+Model used : Random Forest
 
 ### 1590 - adult
 https://www.openml.org/search?type=data&status=active&id=1590
@@ -49,6 +55,8 @@ number of instances	48842
 number of features	15
 number of classes	2
 
+Model used : Gradient Boosting Classifier
+
 ### 40922 - Run_or_walk_information
 https://www.openml.org/search?type=data&status=active&id=40922
 "0": walking "1": running
@@ -56,6 +64,8 @@ https://www.openml.org/search?type=data&status=active&id=40922
 number of instances	88588
 number of features	7
 number of classes	2
+
+Model used : Random Forest
 
 
 ### 41138 - APSFailure
@@ -65,37 +75,7 @@ number of instances	76000
 number of features	171
 number of classes	2
 
-### 42395 - SantanderCustomerSatisfaction
-https://www.openml.org/search?type=data&status=active&id=42395
-binary classification problems such as: is a customer satisfied? 
-
-number of instances	200000
-number of features	202
-number of classes	2
-
-### 43439 - Medical-Appointment-No-Shows
-https://www.openml.org/search?type=data&status=active&id=43439
-What if that possible to predict someone to no-show an appointment?
-
-number of instances	110527
-number of features	13
-number of classes	2
-
-### 43551 - Employee-Turnover-at-TECHCO
-https://www.openml.org/search?type=data&status=active&id=43551
-
-number of instances	34452
-number of features	10
-number of classes	2
-
-### 42803 - road-safety
-https://www.openml.org/search?type=data&status=active&id=42803
-
-predict sex of the driver in road accidents
-
-number of instances	363243
-number of features	67
-number of classes	3
+Model used : Gradient Boosting Classifier
 
 ### 41162 - kick
 https://www.openml.org/search?type=data&status=active&id=41162
@@ -106,9 +86,88 @@ number of instances	72983
 number of features	33
 number of classes	2
 
+Model used : Gradient Boosting Classifier
 
+### 42395 - SantanderCustomerSatisfaction
+https://www.openml.org/search?type=data&status=active&id=42395
+binary classification problems such as: is a customer satisfied? 
 
-#### Requirements.txt
-https://pypi.org/project/pipreqs/
+number of instances	200000
+number of features	202
+number of classes	2
 
+Model used : Gradient Boosting Classifier
+
+### 42803 - road-safety
+https://www.openml.org/search?type=data&status=active&id=42803
+
+predict sex of the driver in road accidents
+
+number of instances	363243
+number of features	67
+number of classes	3
+
+Model used : Gradient Boosting Classifier
+
+### 43439 - Medical-Appointment-No-Shows
+https://www.openml.org/search?type=data&status=active&id=43439
+What if that possible to predict someone to no-show an appointment?
+
+number of instances	110527
+number of features	13
+number of classes	2
+
+Model used : Gradient Boosting Classifier
+
+### 43551 - Employee-Turnover-at-TECHCO
+https://www.openml.org/search?type=data&status=active&id=43551
+
+number of instances	34452
+number of features	10
+number of classes	2
+
+Model used : Gradient Boosting Classifier
+
+### MNIST
+https://www.tensorflow.org/datasets/catalog/mnist
+
+number of instances	60000
+number of features	28 x 28
+number of classes	10
+
+Model used : Multi Layer Perceptron
+
+### CIFAR10
+https://www.tensorflow.org/datasets/catalog/cifar10
+
+number of instances	60000
+number of features	2048
+number of classes	10
+
+Model used : Multi Layer Perceptron
+
+#### Embeddings
+
+We take the embeddings generated by a ResNet50 pretrained on ImageNet
+
+#### Embeddings trained with contrastive learning
+
+We use embeddings generated with contrastive learning. See https://github.com/google-research/simclr
+
+### CIFAR100
+https://www.tensorflow.org/datasets/catalog/cifar100
+
+number of instances	60000
+number of features	2048
+number of classes	100
+
+Model used : Multi Layer Perceptron
+
+#### Embeddings
+
+We take the embeddings generated by a ResNet50 pretrained on ImageNet
+
+#### Embeddings trained with contrastive learning
+
+We use embeddings generated with contrastive learning. See https://github.com/google-research/simclr
 

@@ -30,8 +30,8 @@ metrics = [
     ('agreement','agreement_test.csv'),
     ('trustscore','test_trustscore.csv'),
     ('violation','test_violation.csv'),
-    ('exploration','soft_exploration.csv'), #TODO important file to plot
-    ('closest','this_closest.csv')  #TODO important file to plot
+    ('exploration','soft_exploration.csv'),
+    ('closest','this_closest.csv')
 ]
 
 # Import and join data
@@ -47,7 +47,7 @@ for i, (metric_name, filename) in enumerate(metrics):
 
 X_transformer = ColumnTransformer(transformers =[ 
     ('num', StandardScaler(), ['agreement', 'trustscore', 'violation', 'exploration', 'closest']), 
-    ('cat', OneHotEncoder(), ['dataset', 'method']) #TODO : utiliser label encoder ?
+    ('cat', OneHotEncoder(), ['dataset', 'method'])
 ], remainder ='drop') 
 y_transformer = ColumnTransformer(transformers =[('num', StandardScaler(), ['accuracy'])], remainder ='drop')  
 

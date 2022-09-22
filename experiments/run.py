@@ -351,37 +351,6 @@ for seed in range(10):
 
                 # ================================================================================
 
-        # #Saving indexes for reproducibility
-        # """
-        # Data types :
-        # "one per class" = 0
-        # "random" = 1
-        # "test" = 2
-        # """
-
-        # try:
-        #     df_to_save = pd.read_csv('results_{}/indexes.csv'.format(dataset_id)) 
-        #     #First unique indexes
-        #     df = pd.DataFrame([{'seed': int(seed), 'method': int(name_index), 'type': 0, 'index':index} for index in one_per_class])
-        #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-        # except:
-        #     #First unique indexes
-        #     df_to_save = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 0, 'index':index} for index in one_per_class])
-    
-        # # Randomly selected samples
-        # df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 1, 'index':index} for index in first_index])
-        # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-        # # Test indexes
-        # df = pd.DataFrame([{'seed': seed, 'method': name_index, 'type': 2, 'index':index} for index, is_in_test_set in enumerate(splitter.test) if is_in_test_set])
-        # df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-        # # Train indexes
-        # # for i in range(n_iter):
-        # #     df = pd.DataFrame([{'seed': seed, 'method': name, 'n_iter': i+1, 'dataset':dataset_id, 'type': "train", 'index':index} for index, is_in_train_set in enumerate(splitter.batch_at(i + 1)) if is_in_train_set])
-        # #     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-        
-        # df_to_save.to_csv('results_{}/indexes.csv'.format(dataset_id), index=False)
-
-
         log_folder = Path('logs')
         log_folder.mkdir(exist_ok=True)
         with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
@@ -412,10 +381,3 @@ for seed in range(10):
     df_to_save = pd.concat([df_to_save, df], ignore_index=True)
     
     df_to_save.to_csv('results_{}/indexes.csv'.format(dataset_id), index=False)
-        
-
-
-""" Possibles bugs remarqués ?
-
-- Tous les 1ers indices de samples sélectionnés par la méthode random, lors de chaque batch d'itération d'AL, se suivent et augmentent de 1 à chaque itération -> problème de mon côté pour interpreter le mask du splitter ?
-"""
