@@ -60,7 +60,7 @@ with open('BENCH_SUMMARY_acc_results', 'w') as f:
         txt = f"{dataset_id}"
         for sampler_ac, sampler_std in dataset_perfs:
             if sampler_ac is not None:
-                txt += f' & {np.round(sampler_ac*100, 1)} (\pm{np.round(sampler_std*100, 1)})'
+                txt += f' & {np.round(sampler_ac*100, 1)} ($\pm${np.round(sampler_std*100, 1)})'
             else:
                 txt += f' &  '
         f.write(txt + '\\\\'+'\n')

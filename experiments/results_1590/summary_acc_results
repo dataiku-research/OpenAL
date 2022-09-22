@@ -4,6 +4,7 @@
 	confidence - 81.5 \pm(1.0)
 	entropy - 81.5 \pm(1.0)
 	iwkmeans - 82.5 \pm(1.2)
+	kcenter - 82.0 \pm(0.6)
 	kmeans - 80.7 \pm(0.8)
 	margin - 81.5 \pm(1.0)
 	random - 81.8 \pm(1.0)
