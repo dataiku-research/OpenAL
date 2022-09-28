@@ -44,6 +44,20 @@ plt.rc('legend', fontsize=20)    # legend fontsize
 plt.rc('lines', linewidth=3)
 
 
+names = {
+    'confidence': 'Confidence',
+    'entropy': 'Entropy',
+    'margin' : 'Margin',
+    'iwkmeans': 'IWKMeans',
+    'wkmeans': 'WKmeans',
+    'kcenter': 'KCenter',
+    'random': 'Random',
+    'kmeans': 'KMeans',
+    'uncertainty', 'Uncertainty'
+}
+
+
+
 # PLOT RESULTS
 if PLOT_TYPE =='results':
     for dataset_id in dataset_ids:
@@ -68,9 +82,9 @@ if PLOT_TYPE =='results':
                 plt.figure(i, figsize=(15,10))
                 x_data = np.arange(n_iter-len(all_metric[0]), n_iter)
                 if is_biclass_task and sampler_name == 'entropy':
-                    plot_confidence_interval(x_data, all_metric, label='{}'.format('uncertainty'.capitalize()), color=colors[sampler_name])
+                    plot_confidence_interval(x_data, all_metric, label=names.get('uncertainty'), color=colors[sampler_name])
                 else:
-                    plot_confidence_interval(x_data, all_metric, label='{}'.format(sampler_name.capitalize()), color=colors[sampler_name])
+                    plot_confidence_interval(x_data, all_metric, label=names.get(sampler_name, sampler_name.capitalize()), color=colors[sampler_name])
                 
 
             plt.xlabel('AL iteration')
