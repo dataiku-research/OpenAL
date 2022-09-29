@@ -48,9 +48,6 @@ from bench.plotting import plot_confidence_interval # Upgraded version of cardin
 
 import joblib
 from tqdm import tqdm
-# import line_profiler
-# profile = line_profiler.LineProfiler()
-# import time
 
 
 # Setup matplotlib
@@ -212,7 +209,7 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                 #User run
                 test_indexes = load_indexes(dataset_id, seed, type='test')                                                              
                 mask = np.full(X.shape[0], -1, dtype=np.int8)
-                mask[test_indexes] = -2                                     # TODO : revoir creation avec mask (wrt current_iter parameter )
+                mask[test_indexes] = -2                                     
                 splitter = ActiveLearningSplitter.from_mask(mask)           # We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
 
 
