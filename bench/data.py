@@ -244,7 +244,7 @@ def preprocess_cifar100():
 def preprocess_cifar100_simclr():
     best_model = lambda seed: MLPClassifier(max_iter=2000, random_state=seed)
     # folder_path = "/data.nfs/data_al/cifar100/"
-    folder_path = "/data/nfs/data_al/cifar100/" #dku24
+    folder_path = "/data/nfs/data_al/cifar100/"
 
     # Embeddings from contrastive learning
     X = np.load(folder_path+'simclr_embed.npy')
