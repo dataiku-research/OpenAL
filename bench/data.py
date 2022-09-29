@@ -207,12 +207,11 @@ def preprocess_mnist():
 
 def preprocess_cifar10():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
-    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
+    folder_path = "./data/cifar10/"
 
     # Embeddings from ImageNet
-    X = np.load(folder_path+'cifar_embeddings.npy')
-    y = np.load(folder_path+'cifar_target.npy')
+    X = np.load(folder_path + 'cifar_embeddings.npy')
+    y = np.load(folder_path + 'cifar_target.npy')
 
     # Transformation to fit with the script (will be transformed later)
     y = np.argmax(y,axis=1)
@@ -221,19 +220,17 @@ def preprocess_cifar10():
 
 def preprocess_cifar10_simclr():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
-    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
+    folder_path = "./data/cifar10/" 
 
     # Embeddings from contrastive learning
-    X = np.load(folder_path+'simclr_embed.npy')
-    y = np.load(folder_path+'simclr_labels.npy')
+    X = np.load(folder_path + 'simclr_embed.npy')
+    y = np.load(folder_path + 'simclr_labels.npy')
 
     return X, y, best_model
 
 def preprocess_cifar100():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar100/"
-    folder_path = "/data/nfs/data_al/cifar100/" #dku24
+    folder_path = "./data/cifar100/"
 
     # Embeddings from ImageNet
     X = np.load(folder_path+'cifar_embeddings.npy')
