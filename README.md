@@ -1,6 +1,5 @@
 # Active Learning Benchmark
-This repository is the official implementation of the active learning benchmark NAME PAPER
-# TODO name
+This repository is the official implementation of the active learning benchmark
 
 
 # A VOIR 
