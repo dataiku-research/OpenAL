@@ -53,7 +53,7 @@ names = {
     'kcenter': 'KCenter',
     'random': 'Random',
     'kmeans': 'KMeans',
-    'uncertainty', 'Uncertainty'
+    'uncertainty': 'Uncertainty'
 }
 
 
