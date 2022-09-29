@@ -11,13 +11,13 @@ from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from itertools import cycle
 import pandas as pd
-from cardinal.plotting import plot_confidence_interval
+from bench.plotting import plot_confidence_interval
 import os
 
 
 PLOT_TYPE =  "results"  #   "results", "variance"
 save_folder = 'experiments'
-dataset_ids = []    #[1461, 1471, 1502, 1590, 40922, 41138, 41162, 42395, 42803, 43439, 43551, 'cifar10', 'cifar10_simclr', 'mnist]
+dataset_ids = [1461, 1471, 1502, 1590, 40922, 41138, 41162, 42395, 42803, 43439, 43551, 'cifar10', 'cifar10_simclr', 'mnist']
 assert len(dataset_ids) > 0
 
 
@@ -39,8 +39,8 @@ metrics = [
 
 multiclass_tasks = ['42803', 'cifar10', 'cifar10_simclr', 'cifar100', 'cifar100_simclr', 'mnist']
 
-plt.rc('font', size=20)          # controls default text sizes
-plt.rc('legend', fontsize=20)    # legend fontsize
+plt.rc('font', size=24)          # controls default text sizes
+plt.rc('legend', fontsize=24)    # legend fontsize
 plt.rc('lines', linewidth=3)
 
 
@@ -96,8 +96,8 @@ if PLOT_TYPE =='results':
             save_dir_path = f'results_{dataset_id}/paper-plots/'
             if not os.path.isdir(save_dir_path):
                 os.makedirs(save_dir_path)
-            plt.savefig(save_dir_path+ f'plot-'+metric_name+'.png')
-            plt.savefig(save_dir_path+ f'plot-'+metric_name+'.pdf')
+            plt.savefig(save_dir_path+ f'plot-' + metric_name + '.png', bbox_inches='tight')
+            plt.savefig(save_dir_path+ f'plot-' + metric_name + '.pdf', bbox_inches='tight')
 
         # plt.show()    
         for i in range(len(metrics)): plt.figure(i).clear()        

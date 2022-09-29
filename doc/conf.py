@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'Benchmark Active Learning'
-copyright = '2022, William Jonas'
-author = 'William Jonas'
+copyright = '2022, Anonymous'
+author = 'Anonymous'
 
 # The full version, including alpha/beta/rc tags
 release = '0'
