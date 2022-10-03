@@ -97,9 +97,96 @@ class Tee(io.StringIO):
         return False
 
 
-def run_benchmark(new_sampler_generator, 
-                datasets_ids:list=['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr', 'mnist'], 
-                sampler_name:string = 'my_custom_sampler'):
+def create_initial_conditions(initial_conditions_name, dataset_id, initial_labeled_size, n_folds):
+
+    initial_conditions_folder = Path('./experiment_indices') / initial_conditions_name
+    initial_conditions_folder.mkdir(parents=True, exist_ok=False)
+
+    preproc = get_dataset(dataset_id)
+    if len(preproc) == 3:
+        X, y, _ = preproc
+    else:
+        X, y, _, _ = preproc
+
+    initial_labeled_size = int(initial_labeled_size * X.shape[0]) if initial_labeled_size < 1 else initial_labeled_size
+
+    experimental_parameters = {
+        "dataset": dataset_id,
+        "n_folds": n_folds,
+        "initial_labeled_size": initial_labeled_size,
+        "initial_conditions_name": initial_conditions_name,
+    }
+
+    with open(str(initial_conditions_folder / 'experimental_parameters.json'), 'w') as experimental_parameters_file:
+        json.dump(experimental_parameters, experimental_parameters_file)
+
+    for seed in range(n_folds):
+        splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
+        splitter.initialize_with_random(
+            n_init_samples=initial_labeled_size,
+            at_least_one_of_each_class=y[splitter.train],
+            random_state=int(seed))
+
+        # Splitter has no save method for now, we do it manually
+        np.savetxt(initial_conditions_folder / '{}.txt'.format(seed), splitter._mask)
+
+
+def create_experiment(experiment_name, initial_conditions_name, batch_size, n_iter):
+    experiment_folder = Path('./experiment_results') / experiment_name
+    experiment_folder.mkdir(parents=True, exist_ok=False)
+
+    experimental_parameters = {
+        "batch_size": batch_size,
+        "n_iter": n_iter,
+        "initial_conditions": initial_conditions_name,
+        "experiment_name": experiment_name,
+    }
+
+    with open(str(experiment_folder / 'experimental_parameters.json'), 'w') as experimental_parameters_file:
+        json.dump(experimental_parameters, experimental_parameters_file)
+
+
+def load_initial_conditions(initial_conditions_name):
+    initial_conditions_folder = Path('./experiment_indices') / initial_conditions_name
+
+    with open(str(initial_conditions_folder / 'experimental_parameters.json'), 'w') as experimental_parameters_file:
+        experimental_parameters = json.load(experimental_parameters_file)
+    
+    return experimental_parameters
+
+
+def load_experiment(experiment_name, initial_conditions):
+    experiment_folder = Path('./experiment_results') / experiment_name
+
+    with open(str(experiment_folder / 'experimental_parameters.json'), 'w') as experimental_parameters_file:
+        experimental_parameters = json.load(experimental_parameters_file)
+
+    if experimental_parameters["initial_conditions"] != initial_conditions['initial_conditions_name']:
+        raise ValueError('Initial conditions and experiments do not match')
+
+    experimental_parameters.update(initial_conditions)
+    return experimental_parameters
+    
+
+def create_experiments():
+    datasets_ids = [
+        '1461', '1471', '1502', '1590', '40922', '41138', '42395',
+        '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr',
+        'mnist'
+    ]
+
+    for dataset_id in datasets_ids:
+        batch_size_ratio = .005 if dataset_id == '1471' else .001
+        create_initial_conditions(dataset_id, dataset_id, batch_size_ratio, 10)
+        create_experiment(dataset_id, dataset_id, batch_size_ratio, 10)
+
+
+def run_benchmark(
+    sampler_name:string,
+    new_sampler_generator, 
+    datasets_ids:list=['1461', '1471', '1502', '1590', '40922', '41138',
+                       '42395', '43439', '43551', '42803', '41162', 'cifar10',
+                       'cifar10_simclr', 'mnist']):
 
     assert sampler_name is not None
     assert datasets_ids is not None
@@ -110,17 +197,51 @@ def run_benchmark(new_sampler_generator,
         assert type(dataset_id) == str, f'{dataset_id} is of type {type(dataset_id)} instead of type "str"'
         assert dataset_id in ['1461', '1471', '1502', '1590', '40922', '41138', '42395', '43439', '43551', '42803', '41162', 'cifar10', 'cifar10_simclr','cifar100', 'cifar100_simclr', 'mnist'], f"{dataset_id} not in available datasets :\n- 1461 \n- 1471\n- 1502\n- 1590\n- 40922\n- 41138\n- 42395\n- 43439\n- 43551\n- 42803\n- 41162\n- cifar10\n- cifar10_simclr\n- cifar100\n- cifar100_simclr\n- mnist"
 
+
+    """
+    0.1% labelisation for all tasks expect for #1471 where we labelise 0.5% at each AL iteration
+    Explanation :
+        # 1471 is very small with a lot of features
+        -> 0.01% of #1471 represents 8 samples : far too small for an AL experiment      
+        -> need more samples to learn
+    """
+
+    two_step_beta = 10  # Beta parameter for wkmeans sampler
+
+    # Samplers should reming commented as they have already been ran and saved in the benchmark results
+    methods = {
+        'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
+        'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
+        'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
+        'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
+        'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
+    }
+
     for dataset_id in datasets_ids:
-        run(dataset_id, new_sampler_generator, sampler_name)
+        initial_conditions = load_initial_conditions(dataset_id)
+        experimental_parameters = load_experiment(dataset_id)
+        run(experimental_parameters)
 
 
 # @profile
-def run(dataset_id, new_sampler_generator, sampler_name):
-    print(f'\n--- RUN DATASET {dataset_id} ---\n')
+def run(experimental_parameters, methods):
 
-    save_folder = 'user_results'
-    if not os.path.isdir(f'{save_folder}/results_{dataset_id}/'): os.makedirs(f'{save_folder}/results_{dataset_id}/')
-    db = CsvDb(f'{save_folder}/results_{dataset_id}/db')
+    experiment_name = experimental_parameters['experiment_name']
+    initial_conditions_name = experimental_parameters['initial_conditions']
+    batch_size = experimental_parameters['batch_size']
+    n_iter = experimental_parameters['n_iter']
+    dataset_id = experimental_parameters['dataset_id']
+    n_folds = experimental_parameters['n_folds']
+    n_initial_labeled = experimental_parameters['n_initial_labeled']
+
+    experiment_folder = Path('./experiment_results') / experiment_name
+
+    print(f'\n--- Running experiment {experiment_name} ---\n')
+
+    db = CsvDb(experiment_folder / 'db')
 
     preproc = get_dataset(dataset_id)
     if len(preproc) == 3:
@@ -133,42 +254,9 @@ def run(dataset_id, new_sampler_generator, sampler_name):
     fit_clf = lambda clf, X, y: clf.fit(X, y)
 
     n_classes = len(np.unique(y))
-    batch_size = int(.005 * X.shape[0]) if dataset_id=='1471' else int(.001 * X.shape[0]) 
-    """
-    0.1% labelisation for all tasks expect for #1471 where we labelise 0.5% at each AL iteration
-    Explanation :
-        #1471 is very small with a lot of features
-        -> 0.01% of #1471 represents 8 samples : far too small for an AL experiment      
-        -> need more samples to learn
-    """
+    batch_size = int(batch_size * X.shape[0]) if batch_size < 1 else batch_size
 
-    args = {
-        "dataset" : dataset_id,
-        "n_seed" : 10, 
-        'n_iter' : 10, 
-        'batch_size' : batch_size,
-        'batch_size_ratio' : (batch_size / len(X)) *100
-        }
 
-    two_step_beta = 10  # Beta parameter for wkmeans sampler
-    start_size = args['batch_size']
-
-    # Samplers should reming commented as they have already been ran and saved in the benchmark results
-    methods = {
-        # 'random': lambda params: RandomSampler(batch_size=params['batch_size'], random_state=params['seed']),
-        # 'margin': lambda params: MarginSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'confidence': lambda params: ConfidenceSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'entropy': lambda params: EntropySampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-        # 'kmeans': lambda params: KCentroidSampler(MiniBatchKMeans(n_clusters=params['batch_size'], n_init=1, random_state=params['seed']), batch_size=params['batch_size']),
-        # 'wkmeans': lambda params: TwoStepMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'iwkmeans': lambda params: TwoStepIncrementalMiniBatchKMeansSampler(two_step_beta, params['clf'], params['batch_size'], assume_fitted=True, n_init=1, random_state=params['seed']),
-        # 'kcenter': lambda params: KCenterGreedy(AutoEmbedder(params['clf'], X=params['train_dataset']), batch_size=params['batch_size']),
-        # # 'batchbald': lambda params: BatchBALDSampler(params['clf'], batch_size=params['batch_size'], assume_fitted=True),
-    }
-
-    # Add new sampler method in the evaluated methods
-    methods[sampler_name] = new_sampler_generator
-    assert len(methods.keys()) >0, "There are no sampling strategies to evaluate"
 
     def get_min_dist_per_class(dist, labels):
         assert(dist.shape[0] == labels.shape[0])
@@ -190,73 +278,50 @@ def run(dataset_id, new_sampler_generator, sampler_name):
 
         for name_index, name in enumerate(methods):
             # print(name)
-            iter_pbar = tqdm(np.arange(args['n_iter']), desc=f"\tProcessing {name}")
+            iter_pbar = tqdm(np.arange(n_iter), desc=f"\tProcessing {name}")
 
             # Check if it has been computer already
             config = dict(
                 seed=seed,
                 method=name,
-                n_iter=args['n_iter'] - 1,
+                n_iter=n_iter - 1,
                 dataset=dataset_id
             )
 
-            
+            if db.get(config, 'accuracy'):
+                continue
+
             # Capture the output for logging
             with Tee() as tee:
 
-                # Train test split 
+                # Reset the splitter with initial conditions
+                mask = np.loadtxt(initial_conditions_folder / '{}.txt'.format(seed))
+                splitter = ActiveLearningSplitter.from_mask(mask)
 
-                # #Admin first runs
-                # splitter = ActiveLearningSplitter.train_test_split(X.shape[0], test_size=.2, random_state=int(seed), stratify=y)
-
-                #User run
-                test_indexes = load_indexes(dataset_id, seed, type='test')                                                              
-                mask = np.full(X.shape[0], -1, dtype=np.int8)
-                mask[test_indexes] = -2                                     # TODO : revoir creation avec mask (wrt current_iter parameter )
-                splitter = ActiveLearningSplitter.from_mask(mask)           # We instanciate the ActiveLearningSplitter with test sample indexes that have been registered and used in the previous benchmark (instead of using seeds)
-
-
-                #Initialisation
-
-                # #Admin first runs
-                # splitter.initialize_with_random(n_init_samples=start_size, at_least_one_of_each_class=y[splitter.train], random_state=int(seed))    #Seed very important for same initialisation between samplers
-                # first_index = np.where(splitter.selected == True)[0]
-
-                #User run
-                first_index = load_indexes(dataset_id, seed, type='random') # We select the same first samples indexes (randomly chosen for initialisation) that have been registered and used in the previous benchmark (instead of using seeds)
-                first_indexs_train = np.zeros(X.shape[0])
-                first_indexs_train[first_index] = True
-                first_indexs_train = np.where(first_indexs_train[splitter.train] == True)   #Projection of global first indexes on the train set indexes
-                splitter.initialize_with_indices(indices=first_indexs_train)
-
-                # splitter.add_batch(first_index, partial=True)
-                assert (np.arange(X.shape[0])[splitter.selected] == first_index).all()
-                assert(np.unique(y[first_index]).shape[0] == np.unique(y).shape[0]), f'{np.unique(y[first_index]).shape[0]} != {np.unique(y).shape[0]}'
-
+                # Check that there is one sample from each class in the initialization
+                assert (np.unique(y[splitter.selected]).shape[0] == np.unique(y).shape[0])
+                assert(splitter.current_iter == 0)
 
                 method = methods[name]
                 classifier = get_clf(seed)
                 previous_predicted = None
                 previous_knn_predicted = None
                 previous_min_dist_per_class = None
-                assert(splitter.selected.sum() == start_size), f"{splitter.selected.sum()}  {start_size}"
-                assert(splitter.selected_at(0).sum() == start_size)
-                assert(splitter.current_iter == 0)
 
                 for i in iter_pbar:
 
                     fit_clf(classifier, X[splitter.selected], y[splitter.selected])
                     predicted = _get_probability_classes(classifier, X)
             
-                    ##############################################################
-                    #  HERE : PARAMETERS GIVEN TO THE SAMPLER AT EACH ITERATION  #
-                    ##############################################################
-                    DYNAMIC_PARAMS = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i, train_dataset=X[splitter.train])
+                    ################################################
+                    #  Parameters passed to the sampler generator  #
+                    ################################################
+                    sampler_params = dict(batch_size=args['batch_size'], clf=classifier, seed=int(seed), iteration=i, train_dataset=X[splitter.train])
                     """
                     train_dataset : labelised + unlabelised samples (all non test samples)
                     """
 
-                    sampler = method(DYNAMIC_PARAMS)
+                    sampler = method(sampler_params)
                     sampler.fit(X[splitter.selected], y[splitter.selected])
 
                     new_selected_index = sampler.select_samples(X[splitter.non_selected])
@@ -264,8 +329,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     splitter.add_batch(new_selected_index)
 
                     assert(splitter.current_iter == (i+1))
-                    assert(splitter.selected_at(i).sum() == ((i+1) * args['batch_size']))   # +1 for initialisation batch
-                    assert(splitter.batch_at(i).sum() == args['batch_size'])
+                    assert(splitter.selected_at(i).sum() == ((i + 1) * batch_size))
+                    assert(splitter.batch_at(i).sum() == batch_size)
 
                     config = dict(
                         seed=seed,
@@ -278,11 +343,8 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     batch = splitter.batch_at(i)
 
 
-                    # Computation metrics
-
-                    # ================================================================================
-
-                    # Performance
+                    # Metrics
+                    # =======
 
                     # Accuracy
 
@@ -297,7 +359,6 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     db.upsert('accuracy_test', config, accuracy_score(y[splitter.test], predicted_test))
                     db.upsert('accuracy_selected', config, accuracy_score(y[selected], predicted_selected))
                     db.upsert('accuracy_batch', config, accuracy_score(y[batch], predicted_batch))
-
 
                     uniques, counts = np.unique(y, return_counts=True)
                     if n_classes == 2:
@@ -435,52 +496,21 @@ def run(dataset_id, new_sampler_generator, sampler_name):
                     previous_predicted = predicted
                     previous_knn_predicted = knn_predicted
 
-            log_folder = Path('logs')
+            log_folder = experiment_folder / 'logs'
             log_folder.mkdir(exist_ok=True)
             with open(log_folder / '{}-{}-{}.log'.format(name, seed, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), 'w') as f:
                 f.write(tee.read())
         
 
-        #Saving indexes for reproducibility
-        """
-        Data types :
-        "one per class" = 0
-        "random" = 1
-        "test" = 2
-        """
-
-
-        # Randomly selected samples
-        if save_folder == 'experiments':
-            try:
-                df_to_save = pd.read_csv(f'{save_folder}/results_{dataset_id}/indexes.csv') 
-                df = pd.DataFrame([{'seed': int(seed), 'type': 1, 'index':index} for index in first_index])
-                df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            except:
-                df_to_save = pd.DataFrame([{'seed': seed, 'type': 1, 'index':index} for index in first_index])
-            # Test indexes
-            df = pd.DataFrame([{'seed': seed, 'type': 2, 'index':index} for index in np.where(splitter.test==True)[0]])
-            df_to_save = pd.concat([df_to_save, df], ignore_index=True)
-            df_to_save.to_csv(f'{save_folder}/results_{dataset_id}/indexes.csv', index=False)
-
-
-
     # start = time.time()
-    for seed in range(args['n_seed']):
+    for seed in range(n_folds):
         run_AL_experiment(seed)
     # joblib.Parallel(n_jobs=5, prefer='processes')(joblib.delayed(run_AL_experiment)(seed) for seed in range(args['n_seed']) )
     # t_elapsed = time.time() - start
     # print(t_elapsed)
 
-    # Save run args in a txt file
-    with open(f'{save_folder}/results_{dataset_id}/' + 'arguments.txt', 'w') as f:
-        f.write("----- Experiments parameters ----- \n\n")
-        for key in args.keys():
-            f.write(f'\t{key} :\t{args[key]}\n')
-    f.close()
-
     # Plots results from saved csv
-    plot_results(dataset_id, n_iter=args['n_iter'], n_seed=args['n_seed'], save_folder=save_folder)
+    plot_results(dataset_id, n_iter=n_iter, n_seed=n_folds, save_folder=experiment_folder / 'plots')
 
     # Propose to merge current sampler results to benchmark resutls
     share_results(dataset_id)
@@ -552,29 +582,11 @@ def plot_results(dataset_id, n_iter, n_seed, save_folder, show=False):
         plt.title('{} metric'.format(metric_name))
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.pdf')
-        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-'+metric_name+'.png') #For opening in code editor
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-' + metric_name + '.pdf')
+        plt.savefig(f'{save_folder}/results_{dataset_id}/plot-' + metric_name + '.png')
 
     if show:
         plt.show()
 
-    for i in range(len(metrics)): plt.figure(i).clear()    
-
-
-def load_indexes(dataset_id, seed, type):
-    """
-    Instead of only seeding the random initialisation, we use the indexes that have been saved during the first benchmark run.
-    Hence, all the samplers will have the same random initialisation samples
-    """
-    # if type == 'one_class':
-    #     type = 0
-    if type == 'random':
-        type = 1
-    elif type == 'test':
-        type = 2 
-    else:
-        exit(f'[ERROR] Can’t load indexes from type {type}')
-
-    df = pd.read_csv(f'experiments/results_{dataset_id}/indexes.csv')
-
-    return df.loc[(df["seed"] == seed) & (df["type"]== type)]['index'].values   
+    for i in range(len(metrics)):
+        plt.figure(i).clear()    
