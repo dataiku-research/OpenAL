@@ -207,8 +207,7 @@ def preprocess_mnist():
 
 def preprocess_cifar10():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
-    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
+    folder_path = "./data/cifar10/"
 
     # Embeddings from ImageNet
     X = np.load(folder_path+'cifar_embeddings.npy')
@@ -221,8 +220,7 @@ def preprocess_cifar10():
 
 def preprocess_cifar10_simclr():
     best_model = lambda seed: MLPClassifier(random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar10/"  #dku42
-    folder_path = "/data/nfs/data_al/cifar10/"  #dku24
+    folder_path = "./data/cifar10/"  #dku24
 
     # Embeddings from contrastive learning
     X = np.load(folder_path+'simclr_embed.npy')
@@ -233,7 +231,7 @@ def preprocess_cifar10_simclr():
 def preprocess_cifar100():
     best_model = lambda seed: MLPClassifier(random_state=seed)
     # folder_path = "/data.nfs/data_al/cifar100/"
-    folder_path = "/data/nfs/data_al/cifar100/" #dku24
+    folder_path = "./data/cifar100/" #dku24
 
     # Embeddings from ImageNet
     X = np.load(folder_path+'cifar_embeddings.npy')
@@ -243,17 +241,6 @@ def preprocess_cifar100():
     y = np.argmax(y,axis=1)
 
     return X, y, best_model#, transformer
-
-def preprocess_cifar100_simclr():
-    best_model = lambda seed: MLPClassifier(max_iter=2000, random_state=seed)
-    # folder_path = "/data.nfs/data_al/cifar100/"
-    folder_path = "/data/nfs/data_al/cifar100/" #dku24
-
-    # Embeddings from contrastive learning
-    X = np.load(folder_path+'simclr_embed.npy')
-    y = np.load(folder_path+'simclr_labels.npy')
-
-    return X, y, best_model
 
 
 def get_openml(dataset_id):
@@ -287,9 +274,7 @@ def get_image_dataset(dataset_id):
         raise ValueError('No preprocessing found for dataset {}'.format(dataset_id))
     
     func = funcs[func_name]
-
-    preproc = func()
-    X, y, best_model = preproc
+    X, y, best_model = func()
 
     y = LabelEncoder().fit_transform(y)
 
@@ -297,7 +282,7 @@ def get_image_dataset(dataset_id):
 
 
 def get_dataset(dataset_id):
-    if dataset_id in ['mnist','cifar10','cifar100','cifar10_simclr','cifar100_simclr']:
+    if dataset_id in ['mnist','cifar10','cifar100','cifar10_simclr']:
         return get_image_dataset(dataset_id)
     else:
         return get_openml(int(dataset_id))
