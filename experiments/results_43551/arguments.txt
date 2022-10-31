@@ -1,7 +1,0 @@
------ Experiments parameters ----- 
-
-	dataset :	43551
-	n_seed :	10
-	n_iter :	10
-	batch_size :	34
-	batch_size_ratio :	0.09868802972251248

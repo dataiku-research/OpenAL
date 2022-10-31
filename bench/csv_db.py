@@ -45,12 +45,16 @@ class CsvValue:
         with open(self.type_path, 'w') as f:
             json.dump(dtypes_dict, f)
 
+    def get_dataframe(self):
+        return self._data
 
     def get(self, index):
         if self._data is None:
             return None
-        index_list = [index[i] for i in self._data.index.names]
-        return self._data.loc[tuple(index_list)]
+        index_list = tuple([index[i] for i in self._data.index.names])
+        if index_list not in self._data.index:
+            return None
+        return self._data.loc[index_list]
 
 
 class CsvDb:
@@ -80,3 +84,8 @@ class CsvDb:
         if not key in self._values:
             return None
         return self._values[key].get(index)
+
+    def get_dataframe(self, key):
+        if not key in self._values:
+            return None
+        return self._values[key].get_dataframe()
