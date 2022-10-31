@@ -1,13 +1,9 @@
 # Active Learning Benchmark
-This repository is the official implementation of the active learning benchmark
+This repository is the official implementation of anonymous 2022 
 
+## How to run
 
-# A VOIR 
-- Mettre un path générique pour le loading des embeddings cifar + remove old paths 
-- Ratio définissant la classe minoritaire pour l'évaluation du F-Score : Line 300 main_run.py -> if (counts[label_id] / sum) <= (0.2 / n_classes):
-- Supprimer le folder 'datasets' qui corresponds au folder de recherche de datasets avec d'anciens scripts sales (old runs + suppression cat features) ?
-- Supprimer folder best model ?
-
+The file `main_run.py` contains the necessary code to re-run the benchmark.
 
 ## Datasets characteristics
 
