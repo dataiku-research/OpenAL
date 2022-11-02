@@ -41,7 +41,7 @@ Image data
 MNIST dataset
 -------------
 
-.. figure:: ../experiments_results/mnist/plots/plot-Accuracy.png
+.. figure:: ../experiment_results/mnist/plots/plot-Accuracy.png
    :align: center
 
    MNIST accuracy results
