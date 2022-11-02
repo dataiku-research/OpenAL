@@ -1,1 +1,0 @@
-{"dataset": "cifar10", "n_folds": 10, "initial_labeled_size": 60, "initial_conditions_name": "cifar10", "n_classes": 10}

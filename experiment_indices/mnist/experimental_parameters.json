@@ -1,1 +1,0 @@
-{"dataset": "mnist", "n_folds": 10, "initial_labeled_size": 70, "initial_conditions_name": "mnist", "n_classes": 10}

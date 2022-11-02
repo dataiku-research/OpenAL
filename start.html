@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Getting started &#8212; Benchmark Active Learning 0 documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Sampler with dynamic parameters" href="custom_sampler.html" />
+    <link rel="prev" title="Welcome to Benchmark Active Learning’s documentation!" href="index.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Benchmark Active Learning 0 documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 current active nav-item">
+ <a class="current reference internal nav-link" href="#">
+  Getting started
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="custom_sampler.html">
+  Sampler with dynamic parameters
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="results.html">
+  Results
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+    
+    <div class="toc-item">
+      
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installation">
+   Installation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#implement-your-custom-sampler">
+   Implement your custom sampler
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#sampler-architecture">
+     Sampler architecture
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#sampler-input-parameters">
+     Sampler input parameters
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#run-the-benchmark">
+   Run the benchmark
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#save-your-results">
+   Save your results
+  </a>
+ </li>
+</ul>
+
+</nav>
+    </div>
+    
+    <div class="toc-item">
+      
+    </div>
+    
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <section id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading">#</a></h1>
+<p>How to use the benchmark and evaluate your own sampler</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
+<p>The first step is to <strong>fork</strong> or clone the benchmark GitHub repository.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/dataiku-research/benchmark_tabular_active_learning.git
+</pre></div>
+</div>
+<p>Then you have to install all the required packages used inside the benchmark.</p>
+<p><em>Please run this command when you are located at the root of the benchmark folder</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pip install -r requirement.txt
+</pre></div>
+</div>
+</section>
+<section id="implement-your-custom-sampler">
+<h2>Implement your custom sampler<a class="headerlink" href="#implement-your-custom-sampler" title="Permalink to this heading">#</a></h2>
+<section id="sampler-architecture">
+<h3>Sampler architecture<a class="headerlink" href="#sampler-architecture" title="Permalink to this heading">#</a></h3>
+<p>Your sampler should be defined inside <code class="docutils literal notranslate"><span class="pre">my_sampler.py</span></code> file inside the <code class="docutils literal notranslate"><span class="pre">MyCustomSamplerClass</span></code> class.</p>
+<p>The sampler you want to evaluate in this benchmark must follow this architecture, implementing the fit and select samples method :</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>class MyCustomSamplerClass<span class="o">()</span>:
+    <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Args:</span>
+<span class="s2">        batch_size: Numbers of samples to select.</span>
+<span class="s2">        random_state: Random seeding</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    def __init__<span class="o">(</span>self, batch_size: int, random_state: <span class="nv">RandomStateType</span> <span class="o">=</span> None<span class="o">)</span>:
+
+        <span class="c1"># do some stuff</span>
+
+        <span class="k">return</span>
+
+
+    def fit<span class="o">(</span>self, X: np.ndarray, y: np.ndarray <span class="o">=</span> None<span class="o">)</span>:
+        <span class="s2">&quot;&quot;&quot;Fit the model on labeled samples.</span>
+<span class="s2">        Args:</span>
+<span class="s2">            X: Labeled samples of shape (n_samples, n_features).</span>
+<span class="s2">            y: Labels of shape (n_samples).</span>
+
+<span class="s2">        Returns:</span>
+<span class="s2">            The object itself</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># do some stuff</span>
+
+        <span class="k">return</span> self
+
+
+    def select_samples<span class="o">(</span>self, X: np.array<span class="o">)</span> -&gt; np.array:
+        <span class="s2">&quot;&quot;&quot;Selects the samples from unlabeled data using the internal scoring.</span>
+<span class="s2">        Args:</span>
+<span class="s2">            X: Pool of unlabeled samples of shape (n_samples, n_features).</span>
+<span class="s2">            strategy: Strategy to use to select queries.</span>
+<span class="s2">        Returns:</span>
+<span class="s2">            Indices of the selected samples of shape (batch_size).</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># do some stuff</span>
+
+        <span class="k">return</span> index
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="sampler-input-parameters">
+<h3>Sampler input parameters<a class="headerlink" href="#sampler-input-parameters" title="Permalink to this heading">#</a></h3>
+<p>Your custom sampler parameters should be defined inside <code class="docutils literal notranslate"><span class="pre">main.py</span></code> file or <code class="docutils literal notranslate"><span class="pre">main.ipynb</span></code> file inside the <code class="docutils literal notranslate"><span class="pre">get_my_sampler</span></code> function.
+Everything is already imported so that you just have to manage your sampler input parameters defined inside this function.
+Your can either add your custom sampler parameters and remove the dynamic input parameters already implemented.</p>
+<p>This function will be used later in the benchmark in order to instanciate your sampler with it’s custom parameters, and additional dynamic parameters if needed.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>def get_my_sampler<span class="o">(</span>params : dict<span class="o">)</span> :
+    <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Function used to instanciate your sampler with it&#39;s parameters</span>
+
+<span class="s2">    Parameters:</span>
+<span class="s2">        params : parameters that will be passed to generated your sampler with automatically generated ’batch_size’, ’classifier’, &#39;iteration&#39; and ’random_state’ according to the selected dataset, current AL iteration and the current seed used</span>
+<span class="s2">        You can remove these parameters from the initialisation parameters below if they are not used inside your custom sampler</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO : add your custom sampler parameters and remove the default ones if not useful</span>
+    <span class="nv">sampler</span> <span class="o">=</span> MyCustomSamplerClass<span class="o">(</span>
+        <span class="c1"># remove some of these parameters if not useful</span>
+        <span class="nv">batch_size</span> <span class="o">=</span> params<span class="o">[</span><span class="s1">&#39;batch_size&#39;</span><span class="o">]</span>,
+        <span class="nv">classifier</span> <span class="o">=</span> params<span class="o">[</span><span class="s1">&#39;clf&#39;</span><span class="o">]</span>,
+        <span class="nv">iteration</span> <span class="o">=</span> params<span class="o">[</span><span class="s1">&#39;iteration&#39;</span><span class="o">]</span>,    <span class="c1"># AL iteration</span>
+        <span class="nv">random_state</span> <span class="o">=</span> params<span class="o">[</span><span class="s1">&#39;seed&#39;</span><span class="o">]</span>,      <span class="c1"># Important for reproducibility purpose (Use it as much as possible)</span>
+
+        <span class="c1"># add you custom parameters here</span>
+
+    <span class="o">)</span>
+
+    <span class="k">return</span> sampler
+</pre></div>
+</div>
+<p>About available dynamic parameters :</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">batch_size</span></code> refers to the sampling batch size of the sampler. It could be automatically generated according to the selected dataset.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clf</span></code> refers to the estimator of the sampler. It could be automatically generated according to the selected dataset.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iteration</span></code> refers to the current AL iteration.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seed</span></code> refers to the current seed used. As it is really important for reproducibility purpose, you should use this parameter inside your sampler as much as possible.</p></li>
+</ul>
+</section>
+</section>
+<section id="run-the-benchmark">
+<h2>Run the benchmark<a class="headerlink" href="#run-the-benchmark" title="Permalink to this heading">#</a></h2>
+<p>After you properly defined your custom sampler as shown below, there are 2 possible ways to run the benchmark, depending on the file in which you choosed to define your sampler input parameters.</p>
+<p>If you choosed to define your input parameters inside the <code class="docutils literal notranslate"><span class="pre">main.ipynb</span></code> file, you can run the benchmark running the notebook cells.</p>
+<p>On the other hand, if you choosed to define your input parameters inside the <code class="docutils literal notranslate"><span class="pre">main.py</span></code> file, you can run the benchmark typing the command below from your terminal (inside the root of the benchmark folder).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python main.py -datasets_ids <span class="o">[</span>list of datasets ids you want to run<span class="o">]</span>
+
+<span class="c1"># Example :</span>
+<span class="c1"># python main.py -datasets_ids 1461 cifar10</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> If you want to run all the benchmark datasets in a row, you can leave datasets_ids argument empty</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python main.py -datasets_ids
+</pre></div>
+</div>
+</section>
+<section id="save-your-results">
+<h2>Save your results<a class="headerlink" href="#save-your-results" title="Permalink to this heading">#</a></h2>
+<p>After you ran the benchmark for the dataset, a window will automatically pop-up and you will have the possibility to merge your sampler results inside benchmark results.</p>
+<p>If you accept to share your results to the AL community, you just need to <strong>create a Git Pull Request in the main repository</strong> so that your experiments could be verified and merged into the main repository.</p>
+<p>Then your results would be available to everyone</p>
+</section>
+</section>
+
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+      <i class="fas fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Welcome to Benchmark Active Learning’s documentation!</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="custom_sampler.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">Sampler with dynamic parameters</p>
+  </div>
+  <i class="fas fa-angle-right"></i>
+  </a>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2022, Anonymous.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.1.1.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>
